@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: CloudDoctorWeb
+
+  datasource:
+    url: ${PGSQL_URL}
+    username: ${PGSQL_USERNAME}
+    password: ${PGSQL_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  data:
+    redis:
+      port: ${REDIS_PORT}
+      host: ${REDIS_HOST}
+      password: ${REDIS_PASSWORD}
+
+server:
+  port: 9090
