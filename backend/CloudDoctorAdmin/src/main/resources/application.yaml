@@ -14,10 +14,6 @@ spring:
       host: ${REDIS_HOST}
       password: ${REDIS_PASSWORD}
 
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
-
 server:
   port: 9091
 
