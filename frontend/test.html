@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>AWS IAM 보안 가이드 - Access Key 관리</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f9f9f9;
+            color: #333;
+        }
+
+        h1,
+        h2 {
+            color: #222;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .severity {
+            font-size: 18px;
+            font-weight: bold;
+            color: #c62828;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background: #f1f1f1;
+        }
+
+        code {
+            background: #eee;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .quiz {
+            margin-top: 15px;
+        }
+
+        .quiz button {
+            margin-top: 10px;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #1976d2;
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>IAM 자격증명 유출 및 노출 가이드</h1>
+
+    <!-- Single-page Checklist -->
+    <div class="card">
+        <h2>체크리스트 (Single-page Checklist)</h2>
+        <p class="severity">중요도: 🔴🔴⚪ | 서비스: IAM | 분류: 계정 및 접근 제어</p>
+        <table>
+            <tr>
+                <th>항목명</th>
+                <th>위험도</th>
+                <th>검출 명령</th>
+                <th>권장 조치</th>
+            </tr>
+            <tr>
+                <td>발급일 기준 6개월 초과 Access Key 존재</td>
+                <td>🔴</td>
+                <td><code>aws iam list-access-keys --user-name alice</code></td>
+                <td>비활성화 → 새 키 발급</td>
+            </tr>
+            <tr>
+                <td>사용되지 않는 Access Key</td>
+                <td>🟠</td>
+                <td><code>aws iam get-access-key-last-used --access-key-id AKIA...</code></td>
+                <td>삭제 권장</td>
+            </tr>
+            <tr>
+                <td>관리자 권한 계정의 장기 키</td>
+                <td>🔴</td>
+                <td><code>aws iam list-attached-user-policies --user-name admin</code></td>
+                <td>권한 축소 및 회수</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Learning Hub -->
+    <div class="card">
+        <h2>학습 허브 (Learning Hub)</h2>
+        <p>Access Key 노출 시 어떤 일이 벌어질까요?</p>
+        <ul>
+            <li>공격자는 키를 수집 후 AWS API 호출 → 리소스 열거</li>
+            <li>권한 확대 (새 사용자·정책 변경) 및 지속성 확보</li>
+            <li>S3/RDS 데이터 탈취, 서비스 변조, 암호화폐 채굴</li>
+        </ul>
+
+        <h3>예방 모범 사례</h3>
+        <ul>
+            <li>장기 Access Key 사용 금지, 주기적 로테이션 (90일)</li>
+            <li>Secrets Manager 또는 SSM Parameter Store 사용</li>
+            <li>MFA 활성화 및 최소 권한 원칙 적용</li>
+        </ul>
+
+        <div class="quiz">
+            <h3>퀴즈: Access Key가 GitHub에 노출되면 어떤 결과가 발생할 수 있을까요?</h3>
+            <button onclick="alert('정답: 공격자가 즉시 API 호출 → 데이터 유출, 리소스 변조, 비용 남용 발생')">정답 확인</button>
+        </div>
+    </div>
+</body>
+
+</html>
