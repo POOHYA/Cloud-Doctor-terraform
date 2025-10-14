@@ -1,23 +1,26 @@
-import { SsgoiTransition } from "@ssgoi/react";
+import GuidelineDisplay from '../GuidelineDisplay';
 
 export default function Database() {
   return (
-    <SsgoiTransition id="prowler">
       <section id="Guide">
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <main className="max-w-3xl w-full p-6 bg-white rounded-2xl shadow-md">
-            <h1 className="text-2xl font-semibold mb-2">React + TypeScript + Tailwind</h1>
-            <p className="text-sm text-gray-600 mb-4">기본 템플릿입니다 — 여기에 컴포넌트를 추가해서 개발을 시작하세요.</p>
-
-            <section className="space-y-3">
-              <div className="p-4 border rounded">여기에 컴포넌트 또는 레이아웃을 넣으세요.</div>
-              <div className="p-4 border rounded">Tailwind 클래스를 사용해 스타일하세요.</div>
-            </section>
-
-            <footer className="mt-6 text-xs text-gray-500">Built with React · TypeScript · TailwindCSS</footer>
-          </main>
+        <div className="p-6">
+          <GuidelineDisplay />
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h1 className="text-3xl font-bold mb-6">데이터베이스 보안</h1>
+            <div className="prose max-w-none">
+              <h2>개요</h2>
+              <p>데이터베이스 보안은 데이터 보호의 핵심입니다.</p>
+              
+              <h2>주요 보안 원칙</h2>
+              <ul>
+                <li>데이터 암호화 (저장 시 및 전송 시)</li>
+                <li>데이터베이스 접근 제어</li>
+                <li>정기적인 백업 및 복구 테스트</li>
+                <li>감사 로그 활성화</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </section>
-    </SsgoiTransition>
   );
 }

@@ -1,8 +1,5 @@
-import { SsgoiTransition } from "@ssgoi/react";
-
 export default function Prowler() {
   return (
-    <SsgoiTransition id="prowler">
       <section id="Guide">
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
           <main className="max-w-3xl w-full p-6 bg-white rounded-2xl shadow-md">
@@ -18,6 +15,5 @@ export default function Prowler() {
           </main>
         </div>
       </section>
-    </SsgoiTransition>
   );
 }

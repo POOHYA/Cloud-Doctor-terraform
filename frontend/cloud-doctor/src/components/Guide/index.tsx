@@ -1,5 +1,3 @@
-import { Ssgoi, SsgoiTransition } from "@ssgoi/react";
-import { drill } from "@ssgoi/react/view-transitions";
 import { Link } from "react-router-dom";
 
 export { default as Account } from "./Account";
@@ -11,26 +9,8 @@ export { default as Monitoring } from "./Monitoring";
 export { default as Network } from "./Network";
 export { default as Storage } from "./Storage";
 
-const config = {
-  transitions: [
-    {
-      from: '/guide',
-      to: '/guide/*',
-      transition: drill({ direction: 'enter' }),
-      symmetric: false
-    },
-    {
-      from: '/guide/*',
-      to: '/guide',
-      transition: drill({ direction: 'exit' })
-    }
-  ]
-}
-
 function Index() {
   return (
-    <SsgoiTransition id="guide">
-      <Ssgoi config={config}>
       <main>
       <section id="Guide">
         <div className="p-4">
@@ -134,8 +114,6 @@ function Index() {
 
       </section>
       </main>
-      </Ssgoi>
-    </SsgoiTransition>
   );
 }
 
