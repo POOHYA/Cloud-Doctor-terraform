@@ -13,9 +13,9 @@ public interface JwtService {
     String generateAccessToken(User user, String userAgent);
     
     /**
-     * 리프레시 토큰 생성
+     * 리프레시 토큰 생성 및 DB 저장
      */
-    String generateRefreshToken(User user);
+    String generateRefreshToken(User user, String userAgent);
     
     /**
      * 토큰에서 사용자명 추출
@@ -23,9 +23,14 @@ public interface JwtService {
     String extractUsername(String token);
     
     /**
-     * 토큰 유효성 검증
+     * 액세스 토큰 유효성 검증 (Redis + User-Agent)
      */
     boolean validateToken(String token, String userAgent);
+    
+    /**
+     * 리프레시 토큰 유효성 검증 (DB + User-Agent)
+     */
+    boolean validateRefreshToken(String token, String userAgent);
     
     /**
      * 액세스 토큰을 Redis에 저장
@@ -41,4 +46,9 @@ public interface JwtService {
      * Redis에서 액세스 토큰 삭제
      */
     void removeAccessToken(String username);
+    
+    /**
+     * DB에서 리프레시 토큰 삭제
+     */
+    void removeRefreshToken(String username);
 }

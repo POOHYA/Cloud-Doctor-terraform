@@ -2,6 +2,8 @@ package com.ksj.clouddoctorweb.controller;
 
 import com.ksj.clouddoctorweb.entity.*;
 import com.ksj.clouddoctorweb.repository.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.web.bind.annotation.*;
@@ -12,31 +14,23 @@ import java.util.List;
  * 프론트엔드에서 필요한 데이터를 제공하는 REST API
  */
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 @Log4j2
+@Tag(name = "공개 API", description = "비회원도 접근 가능한 공개 API")
 public class ApiController {
     
-    private final UserRepository userRepository;
     private final CloudProviderRepository cloudProviderRepository;
-    private final ResourceRepository resourceRepository;
-    
-    /**
-     * 전체 사용자 목록 조회
-     * @return 사용자 리스트
-     */
-    @GetMapping("/users")
-    public List<User> getUsers() {
-        log.info("사용자 목록 조회 요청");
-        List<User> users = userRepository.findAll();
-        log.info("사용자 {} 명 조회됨", users.size());
-        return users;
-    }
+    private final ServiceListRepository serviceListRepository;
+    private final GuidelineRepository guidelineRepository;
+    private final ChecklistRepository checklistRepository;
+    private final UserChecklistResultRepository userChecklistResultRepository;
     
     /**
      * 활성화된 클라우드 제공업체 목록 조회
      * @return 클라우드 제공업체 리스트
      */
+    @Operation(summary = "클라우드 제공업체 목록", description = "AWS, GCP, Azure 등 활성화된 클라우드 제공업체 목록 조회")
     @GetMapping("/providers")
     public List<CloudProvider> getProviders() {
         log.info("클라우드 제공업체 목록 조회 요청");
@@ -44,27 +38,61 @@ public class ApiController {
     }
     
     /**
-     * 전체 리소스 목록 조회
-     * @return 리소스 리스트
+     * 특정 클라우드 제공업체의 서비스 리스트 조회
+     * @param providerId 클라우드 제공업체 ID
+     * @return 서비스 리스트
      */
-    @GetMapping("/resources")
-    public List<Resource> getResources() {
-        log.info("전체 리소스 목록 조회 요청");
-        return resourceRepository.findAll();
+    @Operation(summary = "제공업체별 서비스 목록", description = "특정 클라우드 제공업체의 서비스 목록 (EC2, RDS 등)")
+    @GetMapping("/services/provider/{providerId}")
+    public List<ServiceList> getServicesByProvider(@PathVariable Long providerId) {
+        log.info("클라우드 제공업체 ID {} 의 서비스 조회 요청", providerId);
+        return serviceListRepository.findByCloudProviderIdAndIsActiveTrue(providerId);
     }
     
     /**
-     * 특정 사용자의 리소스 목록 조회
-     * @param userId 사용자 ID
-     * @return 해당 사용자의 리소스 리스트
+     * 전체 가이드라인 목록 조회
+     * @return 가이드라인 리스트
      */
-    @GetMapping("/resources/user/{userId}")
-    public List<Resource> getResourcesByUser(@PathVariable Long userId) {
-        log.info("사용자 ID {} 의 리소스 조회 요청", userId);
-        return resourceRepository.findByAccountIdIn(
-            userRepository.findById(userId)
-                .map(user -> List.of(user.getId()))
-                .orElse(List.of())
-        );
+    @Operation(summary = "가이드라인 목록", description = "전체 보안 가이드라인 목록 조회")
+    @GetMapping("/guidelines")
+    public List<Guideline> getGuidelines() {
+        log.info("가이드라인 목록 조회 요청");
+        return guidelineRepository.findAll();
+    }
+    
+    /**
+     * 특정 서비스의 가이드라인 조회
+     * @param serviceId 서비스 ID
+     * @return 가이드라인 리스트
+     */
+    @Operation(summary = "서비스별 가이드라인", description = "특정 서비스의 보안 가이드라인 목록")
+    @GetMapping("/guidelines/service/{serviceId}")
+    public List<Guideline> getGuidelinesByService(@PathVariable Long serviceId) {
+        log.info("서비스 ID {} 의 가이드라인 조회 요청", serviceId);
+        return guidelineRepository.findByServiceListId(serviceId);
+    }
+    
+    /**
+     * 특정 가이드라인의 체크리스트 조회
+     * @param guidelineId 가이드라인 ID
+     * @return 체크리스트 리스트
+     */
+    @Operation(summary = "가이드라인별 체크리스트", description = "특정 가이드라인의 체크리스트 항목 목록")
+    @GetMapping("/checklists/guideline/{guidelineId}")
+    public List<Checklist> getChecklistsByGuideline(@PathVariable Long guidelineId) {
+        log.info("가이드라인 ID {} 의 체크리스트 조회 요청", guidelineId);
+        return checklistRepository.findByGuidelineIdAndIsActiveTrue(guidelineId);
+    }
+    
+    /**
+     * 사용자의 체크리스트 결과 목록 조회
+     * @param userId 사용자 ID
+     * @return 사용자 체크리스트 결과 리스트
+     */
+    @Operation(summary = "사용자 체크리스트 결과", description = "사용자가 저장한 체크리스트 점검 결과 목록")
+    @GetMapping("/user-checklists/{userId}")
+    public List<UserChecklistResult> getUserChecklists(@PathVariable Long userId) {
+        log.info("사용자 ID {} 의 체크리스트 결과 조회 요청", userId);
+        return userChecklistResultRepository.findByUserId(userId);
     }
 }

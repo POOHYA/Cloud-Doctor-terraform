@@ -1,6 +1,8 @@
 package com.ksj.clouddoctorweb.service.impl;
 
+import com.ksj.clouddoctorweb.entity.RefreshToken;
 import com.ksj.clouddoctorweb.entity.User;
+import com.ksj.clouddoctorweb.repository.RefreshTokenRepository;
 import com.ksj.clouddoctorweb.service.JwtService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -9,8 +11,10 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.SecretKey;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -24,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 public class JwtServiceImpl implements JwtService {
     
     private final RedisTemplate<String, String> redisTemplate;
+    private final RefreshTokenRepository refreshTokenRepository;
     
     @Value("${jwt.secret:cloudDoctorSecretKeyForJwtTokenGeneration2024}")
     private String jwtSecret;
@@ -44,7 +49,7 @@ public class JwtServiceImpl implements JwtService {
         String token = Jwts.builder()
                 .subject(user.getUsername())
                 .claim("role", user.getRole().name())
-                .claim("fullName", user.getFullName())
+                .claim("userId", user.getId())
                 .claim("userAgent", userAgent)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
@@ -57,13 +62,32 @@ public class JwtServiceImpl implements JwtService {
     }
     
     @Override
-    public String generateRefreshToken(User user) {
-        return Jwts.builder()
+    @Transactional
+    public String generateRefreshToken(User user, String userAgent) {
+        // 기존 리프레시 토큰 삭제
+        refreshTokenRepository.deleteByUserId(user.getId());
+        
+        String token = Jwts.builder()
                 .subject(user.getUsername())
+                .claim("userId", user.getId())
+                .claim("role", user.getRole().name())
+                .claim("fullName", user.getFullName())
+                .claim("email", user.getEmail())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + refreshTokenExpiration))
                 .signWith(getSigningKey())
                 .compact();
+        
+        // DB에 저장 (User-Agent 포함)
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setUser(user);
+        refreshToken.setToken(token);
+        refreshToken.setUserAgent(userAgent);
+        refreshToken.setExpiresAt(LocalDateTime.now().plusSeconds(refreshTokenExpiration / 1000));
+        refreshTokenRepository.save(refreshToken);
+        
+        log.info("리프레시 토큰 생성 및 DB 저장: {}", user.getUsername());
+        return token;
     }
     
     @Override
@@ -106,6 +130,52 @@ public class JwtServiceImpl implements JwtService {
     @Override
     public void removeAccessToken(String username) {
         redisTemplate.delete("access_token:" + username);
+    }
+    
+    @Override
+    public boolean validateRefreshToken(String token, String userAgent) {
+        try {
+            Claims claims = extractAllClaims(token);
+            
+            // DB에서 토큰 조회
+            RefreshToken storedToken = refreshTokenRepository.findByToken(token)
+                .orElse(null);
+            
+            if (storedToken == null) {
+                log.warn("리프레시 토큰이 DB에 없음");
+                return false;
+            }
+            
+            // User-Agent 검증 (다른 브라우저 차단)
+            if (!userAgent.equals(storedToken.getUserAgent())) {
+                log.warn("다른 브라우저에서 리프레시 토큰 사용 시도: {} vs {}", 
+                    userAgent, storedToken.getUserAgent());
+                refreshTokenRepository.delete(storedToken);
+                return false;
+            }
+            
+            // 만료 시간 확인
+            if (storedToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+                log.warn("리프레시 토큰 만료");
+                refreshTokenRepository.delete(storedToken);
+                return false;
+            }
+            
+            return true;
+        } catch (Exception e) {
+            log.error("리프레시 토큰 검증 실패: {}", e.getMessage());
+            return false;
+        }
+    }
+    
+    @Override
+    @Transactional
+    public void removeRefreshToken(String username) {
+        refreshTokenRepository.deleteByUserId(
+            refreshTokenRepository.findByToken(username)
+                .map(rt -> rt.getUser().getId())
+                .orElse(null)
+        );
     }
     
     private <T> T extractClaim(String token, java.util.function.Function<Claims, T> claimsResolver) {

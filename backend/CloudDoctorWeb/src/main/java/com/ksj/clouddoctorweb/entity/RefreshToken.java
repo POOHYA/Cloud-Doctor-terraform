@@ -9,29 +9,33 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 /**
- * 클라우드 제공업체 엔티티
- * AWS, GCP, Azure 등의 클라우드 서비스 제공업체
+ * 리프레시 토큰 엔티티
+ * DB에 저장하여 검증
  */
 @Entity
-@Table(name = "cloud_providers")
+@Table(name = "refresh_tokens")
 @Data
 @Getter
 @Setter
 @EntityListeners(AuditingEntityListener.class)
-public class CloudProvider {
+public class RefreshToken {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(unique = true, nullable = false)
-    private String name;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
     
-    @Column(name = "display_name", nullable = false)
-    private String displayName;
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String token;
     
-    @Column(name = "is_active")
-    private Boolean isActive = true;
+    @Column(name = "user_agent", columnDefinition = "TEXT")
+    private String userAgent;
+    
+    @Column(name = "expires_at", nullable = false)
+    private LocalDateTime expiresAt;
     
     @CreatedDate
     @Column(name = "created_at", updatable = false)

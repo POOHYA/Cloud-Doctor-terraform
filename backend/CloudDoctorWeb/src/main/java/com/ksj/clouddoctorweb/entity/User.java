@@ -37,8 +37,21 @@ public class User {
     @Column(name = "full_name", nullable = false)
     private String fullName;
     
+    @Column(length = 150)
+    private String company;
+    
     @Enumerated(EnumType.STRING)
     private Role role = Role.USER;
+    
+    @Column(name = "is_active")
+    private Boolean isActive = true;
+    
+    @Column(name = "is_verified")
+    private Boolean isVerified = false;
+    
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
+
     
     @CreatedDate
     @Column(name = "created_at", updatable = false)

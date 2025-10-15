@@ -9,29 +9,29 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 /**
- * 클라우드 제공업체 엔티티
- * AWS, GCP, Azure 등의 클라우드 서비스 제공업체
+ * 가이드라인 조치방안 이미지 엔티티
  */
 @Entity
-@Table(name = "cloud_providers")
+@Table(name = "guideline_solution_images")
 @Data
 @Getter
 @Setter
 @EntityListeners(AuditingEntityListener.class)
-public class CloudProvider {
+public class GuidelineSolutionImage {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(unique = true, nullable = false)
-    private String name;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "guideline_id", nullable = false)
+    private Guideline guideline;
     
-    @Column(name = "display_name", nullable = false)
-    private String displayName;
+    @Column(name = "image_url", columnDefinition = "TEXT", nullable = false)
+    private String imageUrl;
     
-    @Column(name = "is_active")
-    private Boolean isActive = true;
+    @Column(name = "display_order")
+    private Integer displayOrder = 0;
     
     @CreatedDate
     @Column(name = "created_at", updatable = false)

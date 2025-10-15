@@ -1,12 +1,19 @@
 package com.ksj.clouddoctorweb.service;
 
 import com.ksj.clouddoctorweb.dto.LoginRequest;
+import com.ksj.clouddoctorweb.dto.RegisterRequest;
 import com.ksj.clouddoctorweb.dto.TokenResponse;
+import com.ksj.clouddoctorweb.entity.User;
 
 /**
  * 인증 서비스 인터페이스
  */
 public interface AuthService {
+    
+    /**
+     * 회원가입 처리
+     */
+    User register(RegisterRequest registerRequest);
     
     /**
      * 로그인 처리
