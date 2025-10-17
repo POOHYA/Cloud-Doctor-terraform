@@ -7,6 +7,7 @@ CREATE TABLE users (
     full_name VARCHAR(100) NOT NULL,
     company VARCHAR(150),
     role VARCHAR(20) DEFAULT 'USER' CHECK (role IN ('USER', 'ADMIN')),
+    external_id VARCHAR(100) UNIQUE NOT NULL DEFAULT gen_random_uuid()::text,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT true,
@@ -56,7 +57,10 @@ CREATE TABLE guidelines (
     importance_level VARCHAR(20) NOT NULL CHECK (importance_level IN ('확인요망', '중요', '긴급')),
     why_dangerous TEXT NOT NULL,
     what_happens TEXT NOT NULL,
-    check_criteria TEXT NOT NULL,
+    check_standard TEXT, -- 점검 기준
+    solution_text TEXT, -- 조치 방안 텍스트(이미지는 guide_images에 저장)
+    side_effects TEXT, -- 부작용
+    note TEXT, -- 비고
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by BIGINT NOT NULL REFERENCES users(id)
@@ -137,3 +141,4 @@ CREATE INDEX idx_checklists_created_by ON checklists(created_by);
 CREATE INDEX idx_user_checklist_results_user ON user_checklist_results(user_id);
 CREATE INDEX idx_user_checklist_item_results_result ON user_checklist_item_results(user_checklist_result_id);
 CREATE INDEX idx_user_checklist_item_results_checklist ON user_checklist_item_results(checklist_id);
+CREATE INDEX idx_users_external_id ON users(external_id);

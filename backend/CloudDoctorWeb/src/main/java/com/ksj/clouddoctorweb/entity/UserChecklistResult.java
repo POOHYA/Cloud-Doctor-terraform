@@ -30,10 +30,6 @@ public class UserChecklistResult {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
     
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "checklist_id", nullable = false)
-    private Checklist checklist;
-    
     @Column(name = "result_name", nullable = false, length = 200)
     private String resultName;
     
@@ -45,9 +41,6 @@ public class UserChecklistResult {
     
     @Column(columnDefinition = "TEXT")
     private String notes;
-    
-    @OneToMany(mappedBy = "userChecklistResult", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<UserChecklistItemResult> itemResults;
     
     @CreatedDate
     @Column(name = "created_at", updatable = false)

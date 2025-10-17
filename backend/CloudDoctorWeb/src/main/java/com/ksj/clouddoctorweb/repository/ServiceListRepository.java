@@ -7,4 +7,5 @@ import java.util.List;
 public interface ServiceListRepository extends JpaRepository<ServiceList, Long> {
     List<ServiceList> findByCloudProviderIdAndIsActiveTrue(Long cloudProviderId);
     List<ServiceList> findByIsActiveTrue();
+    boolean existsByCloudProviderIdAndName(Long cloudProviderId, String name);
 }

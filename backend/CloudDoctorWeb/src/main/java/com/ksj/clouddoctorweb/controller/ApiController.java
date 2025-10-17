@@ -1,13 +1,18 @@
 package com.ksj.clouddoctorweb.controller;
 
+import com.ksj.clouddoctorweb.dto.ServiceListResponse;
 import com.ksj.clouddoctorweb.entity.*;
 import com.ksj.clouddoctorweb.repository.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Cloud Doctor API v1 컨트롤러
@@ -25,6 +30,7 @@ public class ApiController {
     private final GuidelineRepository guidelineRepository;
     private final ChecklistRepository checklistRepository;
     private final UserChecklistResultRepository userChecklistResultRepository;
+    private final UserRepository userRepository;
     
     /**
      * 활성화된 클라우드 제공업체 목록 조회
@@ -44,9 +50,12 @@ public class ApiController {
      */
     @Operation(summary = "제공업체별 서비스 목록", description = "특정 클라우드 제공업체의 서비스 목록 (EC2, RDS 등)")
     @GetMapping("/services/provider/{providerId}")
-    public List<ServiceList> getServicesByProvider(@PathVariable Long providerId) {
+    public List<ServiceListResponse> getServicesByProvider(@PathVariable Long providerId) {
         log.info("클라우드 제공업체 ID {} 의 서비스 조회 요청", providerId);
-        return serviceListRepository.findByCloudProviderIdAndIsActiveTrue(providerId);
+        List<ServiceList> services = serviceListRepository.findByCloudProviderIdAndIsActiveTrue(providerId);
+        return services.stream()
+            .map(ServiceListResponse::from)
+            .toList();
     }
     
     /**
@@ -94,5 +103,20 @@ public class ApiController {
     public List<UserChecklistResult> getUserChecklists(@PathVariable Long userId) {
         log.info("사용자 ID {} 의 체크리스트 결과 조회 요청", userId);
         return userChecklistResultRepository.findByUserId(userId);
+    }
+    
+    /**
+     * 내 External ID 조회 (로그인 필수)
+     */
+    @Operation(summary = "내 External ID 조회", description = "AWS STS Cross Account용 내 External ID 조회")
+    @GetMapping("/my-external-id")
+    public ResponseEntity<Map<String, String>> getMyExternalId(Authentication authentication) {
+        User user = userRepository.findByUsername(authentication.getName())
+            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다"));
+        
+        Map<String, String> result = new HashMap<>();
+        result.put("externalId", user.getExternalId());
+        result.put("username", user.getUsername());
+        return ResponseEntity.ok(result);
     }
 }

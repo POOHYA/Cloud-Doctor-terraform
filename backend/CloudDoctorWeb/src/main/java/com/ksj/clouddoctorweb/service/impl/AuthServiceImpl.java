@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.ksj.clouddoctorweb.util.ExternalIdGenerator;
 
 /**
  * 인증 서비스 구현체
@@ -46,6 +47,7 @@ public class AuthServiceImpl implements AuthService {
         user.setFullName(registerRequest.getFullName());
         user.setRole(User.Role.USER);
         user.setCompany(registerRequest.getCompany());
+        user.setExternalId(ExternalIdGenerator.generate());
         
         User savedUser = userRepository.save(user);
         log.info("회원가입 성공: {}", savedUser.getUsername());
@@ -64,24 +66,27 @@ public class AuthServiceImpl implements AuthService {
         String accessToken = jwtService.generateAccessToken(user, userAgent);
         String refreshToken = jwtService.generateRefreshToken(user, userAgent);
         
-        log.info("로그인 성공: {}", user.getUsername());
-        return new TokenResponse(accessToken, refreshToken);
+        log.info("로그인 성공: {} (Role: {})", user.getUsername(), user.getRole());
+        TokenResponse tokenResponse = new TokenResponse(accessToken, refreshToken);
+        tokenResponse.setTokenType(user.getRole().name());
+        return tokenResponse;
     }
     
     @Override
-    public void logout(String username) {
-        // Redis에서 액세스 토큰 삭제
+    public void logout(String refreshToken) {
+        String username = jwtService.extractUsername(refreshToken);
+        // Redis에서 Access Token 삭제 (TTL로 자동 삭제되지만 명시적 삭제)
         jwtService.removeAccessToken(username);
-        // DB에서 리프레시 토큰 삭제
-        jwtService.removeRefreshToken(username);
-        log.info("로그아웃: {}", username);
+        // DB에서 Refresh Token 삭제
+        jwtService.removeRefreshToken(refreshToken);
+        log.info("로그아웃 완료: {}", username);
     }
     
     @Override
     public TokenResponse refreshToken(String refreshToken, String userAgent) {
         // 리프레시 토큰 DB + User-Agent 검증
         if (!jwtService.validateRefreshToken(refreshToken, userAgent)) {
-            throw new RuntimeException("이미 로그인되어 있습니다. 다시 로그인 해주세요.");
+            throw new RuntimeException("유효하지 않은 Refresh Token입니다. 다시 로그인 해주세요.");
         }
         
         String username = jwtService.extractUsername(refreshToken);
@@ -94,10 +99,20 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("비활성화된 계정입니다");
         }
         
+        // Access Token만 재발급 (Refresh Token은 그대로 유지)
         String newAccessToken = jwtService.generateAccessToken(user, userAgent);
-        String newRefreshToken = jwtService.generateRefreshToken(user, userAgent);
         
         log.info("토큰 갱신 성공: {}", username);
-        return new TokenResponse(newAccessToken, newRefreshToken);
+        return new TokenResponse(newAccessToken, refreshToken);
+    }
+    
+    @Override
+    public boolean existsByUsername(String username) {
+        return userRepository.findByUsername(username).isPresent();
+    }
+    
+    @Override
+    public boolean existsByEmail(String email) {
+        return userRepository.findByEmail(email).isPresent();
     }
 }

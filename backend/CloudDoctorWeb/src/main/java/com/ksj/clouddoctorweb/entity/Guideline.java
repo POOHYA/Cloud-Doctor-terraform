@@ -38,9 +38,8 @@ public class Guideline {
     @JoinColumn(name = "service_list_id", nullable = false)
     private ServiceList serviceList;
     
-    @Enumerated(EnumType.STRING)
     @Column(name = "importance_level", nullable = false)
-    private ImportanceLevel importanceLevel;
+    private String importanceLevel;
     
     @Column(name = "why_dangerous", columnDefinition = "TEXT", nullable = false)
     private String whyDangerous;
@@ -48,8 +47,17 @@ public class Guideline {
     @Column(name = "what_happens", columnDefinition = "TEXT", nullable = false)
     private String whatHappens;
     
-    @Column(name = "check_criteria", columnDefinition = "TEXT", nullable = false)
-    private String checkCriteria;
+    @Column(name = "check_standard", columnDefinition = "TEXT")
+    private String checkStandard;
+    
+    @Column(name = "solution_text", columnDefinition = "TEXT")
+    private String solutionText;
+    
+    @Column(name = "side_effects", columnDefinition = "TEXT")
+    private String sideEffects;
+    
+    @Column(name = "note", columnDefinition = "TEXT")
+    private String note;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
@@ -71,6 +79,10 @@ public class Guideline {
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    
+    public void setImportanceLevelString(String level) {
+        this.importanceLevel = level;
+    }
     
     public enum ImportanceLevel {
         LOW, MEDIUM, HIGH, CRITICAL

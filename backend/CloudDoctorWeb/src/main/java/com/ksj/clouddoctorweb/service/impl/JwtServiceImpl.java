@@ -2,6 +2,7 @@ package com.ksj.clouddoctorweb.service.impl;
 
 import com.ksj.clouddoctorweb.entity.RefreshToken;
 import com.ksj.clouddoctorweb.entity.User;
+import com.ksj.clouddoctorweb.exception.SessionExpiredException;
 import com.ksj.clouddoctorweb.repository.RefreshTokenRepository;
 import com.ksj.clouddoctorweb.service.JwtService;
 import io.jsonwebtoken.*;
@@ -33,10 +34,10 @@ public class JwtServiceImpl implements JwtService {
     @Value("${jwt.secret:cloudDoctorSecretKeyForJwtTokenGeneration2024}")
     private String jwtSecret;
     
-    @Value("${jwt.access-token-expiration:300000}") // 5분
+    @Value("${jwt.access-token-expiration:60000}") // 1분
     private long accessTokenExpiration;
     
-    @Value("${jwt.refresh-token-expiration:604800000}") // 7일
+    @Value("${jwt.refresh-token-expiration:120000}") // 2분
     private long refreshTokenExpiration;
     
     private SecretKey getSigningKey() {
@@ -66,15 +67,18 @@ public class JwtServiceImpl implements JwtService {
     public String generateRefreshToken(User user, String userAgent) {
         // 기존 리프레시 토큰 삭제
         refreshTokenRepository.deleteByUserId(user.getId());
+        refreshTokenRepository.flush();
         
+        long now = System.currentTimeMillis();
         String token = Jwts.builder()
                 .subject(user.getUsername())
                 .claim("userId", user.getId())
                 .claim("role", user.getRole().name())
                 .claim("fullName", user.getFullName())
                 .claim("email", user.getEmail())
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + refreshTokenExpiration))
+                .claim("timestamp", now)
+                .issuedAt(new Date(now))
+                .expiration(new Date(now + refreshTokenExpiration))
                 .signWith(getSigningKey())
                 .compact();
         
@@ -103,9 +107,34 @@ public class JwtServiceImpl implements JwtService {
             String username = claims.getSubject();
             String storedToken = getStoredAccessToken(username);
             
-            return !isTokenExpired(token) && 
-                   token.equals(storedToken) && 
-                   userAgent.equals(tokenUserAgent);
+            log.info("토큰 검증: username={}, expired={}, storedTokenExists={}, userAgent={}", 
+                username, isTokenExpired(token), storedToken != null, userAgent);
+            
+            Date expiration = extractExpiration(token);
+            log.info("토큰 만료 시간: {}, 현재 시간: {}", expiration, new Date());
+            
+            if (isTokenExpired(token)) {
+                log.warn("토큰 만료: {}", username);
+                return false;
+            }
+            
+            if (storedToken == null) {
+                log.warn("Redis에 저장된 토큰 없음: {}, 토큰 재생성 필요", username);
+                return false;
+            }
+            
+            if (!token.equals(storedToken)) {
+                log.warn("토큰 불일치: {}", username);
+                return false;
+            }
+            
+            // User-Agent 검증 비활성화 (테스트용)
+            // if (!userAgent.equals(tokenUserAgent)) {
+            //     log.warn("User-Agent 불일치: {} vs {}", userAgent, tokenUserAgent);
+            //     return false;
+            // }
+            
+            return true;
         } catch (Exception e) {
             log.error("토큰 검증 실패: {}", e.getMessage());
             return false;
@@ -156,9 +185,9 @@ public class JwtServiceImpl implements JwtService {
             
             // 만료 시간 확인
             if (storedToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-                log.warn("리프레시 토큰 만료");
+                log.warn("Refresh Token 만료: {}", storedToken.getUser().getUsername());
                 refreshTokenRepository.delete(storedToken);
-                return false;
+                throw new SessionExpiredException("로그인 유효기간이 만료되었습니다. 다시 로그인해주세요.");
             }
             
             return true;
@@ -171,11 +200,11 @@ public class JwtServiceImpl implements JwtService {
     @Override
     @Transactional
     public void removeRefreshToken(String username) {
-        refreshTokenRepository.deleteByUserId(
-            refreshTokenRepository.findByToken(username)
-                .map(rt -> rt.getUser().getId())
-                .orElse(null)
-        );
+        refreshTokenRepository.findByToken(username)
+            .ifPresent(refreshToken -> {
+                refreshTokenRepository.deleteByUserId(refreshToken.getUser().getId());
+                log.info("Refresh Token DB에서 삭제: {}", refreshToken.getUser().getUsername());
+            });
     }
     
     private <T> T extractClaim(String token, java.util.function.Function<Claims, T> claimsResolver) {

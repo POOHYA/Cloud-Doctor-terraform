@@ -23,10 +23,20 @@ public interface AuthService {
     /**
      * 로그아웃 처리
      */
-    void logout(String username);
+    void logout(String refreshToken);
     
     /**
      * 토큰 갱신
      */
     TokenResponse refreshToken(String refreshToken, String userAgent);
+    
+    /**
+     * 사용자명 중복 확인
+     */
+    boolean existsByUsername(String username);
+    
+    /**
+     * 이메일 중복 확인
+     */
+    boolean existsByEmail(String email);
 }

@@ -18,7 +18,8 @@ export interface GuidelineDetail {
     sideEffect: string;
   };
   uncheckedCases: string[];
-  notes: string;
+  note1: string;
+  note2: string;
   createdAt: string;
 }
 

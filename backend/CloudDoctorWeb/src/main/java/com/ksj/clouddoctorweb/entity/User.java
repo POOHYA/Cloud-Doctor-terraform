@@ -51,7 +51,9 @@ public class User {
     
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
-
+    
+    @Column(name = "external_id", unique = true, nullable = false, length = 100)
+    private String externalId;
     
     @CreatedDate
     @Column(name = "created_at", updatable = false)

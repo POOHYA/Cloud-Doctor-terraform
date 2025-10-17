@@ -71,6 +71,22 @@ public class GlobalExceptionHandler {
     }
     
     /**
+     * 로그인 유효기간 만료 (401)
+     */
+    @ExceptionHandler(SessionExpiredException.class)
+    public ResponseEntity<ErrorResponse> handleSessionExpiredException(
+            SessionExpiredException ex, HttpServletRequest request) {
+        log.error("Refresh Token 만료: {}", ex.getMessage());
+        ErrorResponse error = new ErrorResponse(
+            HttpStatus.UNAUTHORIZED.value(),
+            "Session Expired",
+            ex.getMessage(),
+            request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+    
+    /**
      * 일반 런타임 예외 (400)
      */
     @ExceptionHandler(RuntimeException.class)

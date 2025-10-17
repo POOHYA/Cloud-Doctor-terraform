@@ -28,7 +28,8 @@ export default function GuidelineForm({ services, initialData, onSave, onCancel 
       sideEffect: initialData?.content.sideEffect || ''
     },
     uncheckedCases: initialData?.uncheckedCases || [''],
-    notes: initialData?.notes || ''
+    note1: initialData?.note1 || '',
+    note2: initialData?.note2 || ''
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -223,8 +224,8 @@ export default function GuidelineForm({ services, initialData, onSave, onCancel 
         <div>
           <label className="block text-sm font-medium mb-2">Side-effect</label>
           <textarea
-            value={formData.notes}
-            onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+            value={formData.note1}
+            onChange={(e) => setFormData(prev => ({ ...prev, note1: e.target.value }))}
             className="w-full p-3 border rounded-md h-24"
           />
         </div>
@@ -265,8 +266,8 @@ export default function GuidelineForm({ services, initialData, onSave, onCancel 
         <div>
           <label className="block text-sm font-medium mb-2">비고</label>
           <textarea
-            value={formData.notes}
-            onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+            value={formData.note2}
+            onChange={(e) => setFormData(prev => ({ ...prev, note2: e.target.value }))}
             className="w-full p-3 border rounded-md h-24"
           />
         </div>
