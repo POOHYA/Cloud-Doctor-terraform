@@ -377,10 +377,10 @@ export default function Checklist() {
           {services.map((service) => (
             <button
               key={service}
-              className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 shadow-sm ${
+              className={`px-4 py-2 rounded-xl font-medium transition-colors duration-200 shadow-md border ${
                 selectedServices.includes(service)
-                  ? "bg-gradient-to-r from-primary to-accent text-white shadow-lg scale-105"
-                  : "bg-primary-dark/50 text-primary-light border border-primary hover:border-accent hover:shadow-md"
+                  ? "bg-gradient-to-r from-primary to-accent text-white border-transparent"
+                  : "bg-primary-dark/50 text-primary-light border-primary hover:border-accent"
               }`}
               onClick={() => toggleService(service)}
             >

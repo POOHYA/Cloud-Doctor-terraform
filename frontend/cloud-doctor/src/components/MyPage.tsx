@@ -69,12 +69,12 @@ export default function MyPage() {
 
   if (!adminUser) {
     return (
-      <div className="max-w-4xl mx-auto mt-8 p-6 bg-white rounded-lg shadow-md text-center">
-        <h2 className="text-2xl font-bold mb-4">로그인이 필요합니다</h2>
-        <p className="text-gray-600 mb-6">마이페이지를 사용하려면 로그인해주세요.</p>
+      <div className="max-w-4xl mx-auto mt-8 p-6 bg-primary-dark/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-primary text-center">
+        <h2 className="text-2xl font-bold mb-4 text-beige">로그인이 필요합니다</h2>
+        <p className="text-primary-light mb-6">마이페이지를 사용하려면 로그인해주세요.</p>
         <button
           onClick={() => navigate('/login')}
-          className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white rounded-lg hover:from-primary-light hover:to-accent shadow-lg transition-all"
         >
           로그인하기
         </button>
@@ -84,38 +84,38 @@ export default function MyPage() {
 
   return (
     <div className="max-w-4xl mx-auto mt-8 p-6">
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h1 className="text-3xl font-bold mb-4">마이페이지</h1>
+      <div className="bg-primary-dark/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-primary p-6 mb-6">
+        <h1 className="text-3xl font-bold mb-4 text-beige">마이페이지</h1>
         
         {userInfo && (
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <span className="font-semibold">사용자명:</span>
-              <span>{userInfo.username}</span>
+              <span className="font-semibold text-primary-light">사용자명:</span>
+              <span className="text-beige">{userInfo.username}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-semibold">이름:</span>
-              <span>{userInfo.fullName}</span>
+              <span className="font-semibold text-primary-light">이름:</span>
+              <span className="text-beige">{userInfo.fullName}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-semibold">이메일:</span>
-              <span>{userInfo.email}</span>
+              <span className="font-semibold text-primary-light">이메일:</span>
+              <span className="text-beige">{userInfo.email}</span>
             </div>
             {userInfo.company && (
               <div className="flex items-center gap-2">
-                <span className="font-semibold">회사:</span>
-                <span>{userInfo.company}</span>
+                <span className="font-semibold text-primary-light">회사:</span>
+                <span className="text-beige">{userInfo.company}</span>
               </div>
             )}
           </div>
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-xl font-bold mb-4">비밀번호 변경</h2>
+      <div className="bg-primary-dark/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-primary p-6 mb-6">
+        <h2 className="text-xl font-bold mb-4 text-beige">비밀번호 변경</h2>
         
         {success && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md text-green-600 text-sm">
+          <div className="mb-4 p-3 bg-green-900/20 border-l-4 border-green-500 rounded-r-lg text-green-400 text-sm">
             {success}
           </div>
         )}
@@ -123,14 +123,14 @@ export default function MyPage() {
         {!isChangingPassword ? (
           <button
             onClick={() => setIsChangingPassword(true)}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            className="px-4 py-2 bg-gradient-to-r from-primary to-accent text-white rounded-lg hover:from-primary-light hover:to-accent shadow-md transition-all"
           >
             비밀번호 변경하기
           </button>
         ) : (
           <form onSubmit={handlePasswordChange} className="space-y-4">
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
+              <div className="p-3 bg-red-900/20 border-l-4 border-red-500 rounded-r-lg text-red-400 text-sm">
                 {error}
               </div>
             )}
@@ -139,7 +139,7 @@ export default function MyPage() {
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               placeholder="현재 비밀번호"
-              className="w-full p-3 border rounded-md"
+              className="w-full p-3 bg-primary-dark/50 border-2 border-primary text-beige rounded-lg focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-primary-light"
               required
             />
             <input
@@ -147,7 +147,7 @@ export default function MyPage() {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="새 비밀번호"
-              className="w-full p-3 border rounded-md"
+              className="w-full p-3 bg-primary-dark/50 border-2 border-primary text-beige rounded-lg focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-primary-light"
               required
             />
             <input
@@ -155,13 +155,13 @@ export default function MyPage() {
               value={newPasswordConfirm}
               onChange={(e) => setNewPasswordConfirm(e.target.value)}
               placeholder="새 비밀번호 확인"
-              className="w-full p-3 border rounded-md"
+              className="w-full p-3 bg-primary-dark/50 border-2 border-primary text-beige rounded-lg focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-primary-light"
               required
             />
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                className="px-4 py-2 bg-gradient-to-r from-primary to-accent text-white rounded-lg hover:from-primary-light hover:to-accent shadow-md transition-all"
               >
                 변경
               </button>
@@ -172,7 +172,7 @@ export default function MyPage() {
                   setError('');
                   setSuccess('');
                 }}
-                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+                className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 shadow-md transition-all"
               >
                 취소
               </button>
@@ -181,26 +181,26 @@ export default function MyPage() {
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-bold mb-4">저장된 체크리스트</h2>
+      <div className="bg-primary-dark/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-primary p-6">
+        <h2 className="text-xl font-bold mb-4 text-beige">저장된 체크리스트</h2>
         {checklists.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">
+          <p className="text-primary-light text-center py-8">
             아직 저장된 체크리스트가 없습니다.
           </p>
         ) : (
           <div className="space-y-3">
             {checklists.map((checklist) => (
-              <div key={checklist.id} className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+              <div key={checklist.id} className="p-4 bg-primary-dark/30 border border-primary rounded-lg hover:bg-primary-dark/50 cursor-pointer transition-all"
                    onClick={() => navigate(`/checklist?edit=${checklist.id}`)}>
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-semibold text-lg">{checklist.resultName}</h3>
-                    <p className="text-sm text-gray-500">
+                    <h3 className="font-semibold text-lg text-beige">{checklist.resultName}</h3>
+                    <p className="text-sm text-primary-light">
                       {new Date(checklist.createdAt).toLocaleString('ko-KR')}
                     </p>
                   </div>
                   {checklist.isCompleted && (
-                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                    <span className="px-3 py-1 bg-green-900/30 text-green-400 border border-green-500 rounded-full text-sm">
                       완료
                     </span>
                   )}

@@ -89,9 +89,9 @@ export default function Login({ showRegister = true }: LoginProps) {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-8 p-8 bg-gradient-to-br from-white to-blue-50 rounded-2xl shadow-2xl border border-blue-100">
+    <div className="max-w-md mx-auto mt-8 p-8 bg-primary-dark/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-primary">
       <div className="text-center mb-8">
-        <div className="inline-block p-3 bg-blue-600 rounded-full mb-4">
+        <div className="inline-block p-3 bg-gradient-to-r from-primary to-accent rounded-full mb-4">
           <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             {isLoginMode ? (
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -100,15 +100,15 @@ export default function Login({ showRegister = true }: LoginProps) {
             )}
           </svg>
         </div>
-        <h2 className="text-3xl font-bold text-gray-800">
+        <h2 className="text-3xl font-bold text-beige">
           {isLoginMode ? '로그인' : '회원가입'}
         </h2>
-        <p className="text-gray-500 mt-2">
+        <p className="text-primary-light mt-2">
           {isLoginMode ? 'CloudDoctor에 오신 것을 환영합니다' : '새로운 계정을 만들어보세요'}
         </p>
       </div>
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg text-red-700 text-sm flex items-center gap-2">
+        <div className="mb-4 p-4 bg-red-900/20 border-l-4 border-red-500 rounded-r-lg text-red-400 text-sm flex items-center gap-2">
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
           </svg>
@@ -116,7 +116,7 @@ export default function Login({ showRegister = true }: LoginProps) {
         </div>
       )}
       {success && (
-        <div className="mb-4 p-4 bg-green-50 border-l-4 border-green-500 rounded-r-lg text-green-700 text-sm flex items-center gap-2">
+        <div className="mb-4 p-4 bg-green-900/20 border-l-4 border-green-500 rounded-r-lg text-green-400 text-sm flex items-center gap-2">
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
           </svg>
@@ -136,7 +136,7 @@ export default function Login({ showRegister = true }: LoginProps) {
                   setUsernameAvailable(false);
                 }}
                 placeholder="사용자명"
-                className="flex-1 p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                className="flex-1 p-3 bg-primary-dark/50 border-2 border-primary text-beige rounded-lg focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-primary-light"
                 required
               />
               <button
@@ -158,7 +158,7 @@ export default function Login({ showRegister = true }: LoginProps) {
                     setSuccess('사용 가능한 아이디입니다.');
                   }
                 }}
-                className="px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg whitespace-nowrap font-medium"
+                className="px-4 py-3 bg-gradient-to-r from-primary to-accent text-white rounded-lg hover:from-primary-light hover:to-accent transition-all shadow-md hover:shadow-lg whitespace-nowrap font-medium"
               >
                 중복확인
               </button>
@@ -169,7 +169,7 @@ export default function Login({ showRegister = true }: LoginProps) {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="사용자명"
-              className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+              className="w-full p-3 bg-primary-dark/50 border-2 border-primary text-beige rounded-lg focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-primary-light"
               required
             />
           )}
@@ -182,7 +182,7 @@ export default function Login({ showRegister = true }: LoginProps) {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="이름"
-                className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                className="w-full p-3 bg-primary-dark/50 border-2 border-primary text-beige rounded-lg focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-primary-light"
                 required
               />
             </div>
@@ -197,7 +197,7 @@ export default function Login({ showRegister = true }: LoginProps) {
                     setEmailAvailable(false);
                   }}
                   placeholder="이메일"
-                  className="flex-1 p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                  className="flex-1 p-3 bg-primary-dark/50 border-2 border-primary text-beige rounded-lg focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-primary-light"
                   required
                 />
                 <button
@@ -219,7 +219,7 @@ export default function Login({ showRegister = true }: LoginProps) {
                       setSuccess('사용 가능한 이메일입니다.');
                     }
                   }}
-                  className="px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg whitespace-nowrap font-medium"
+                  className="px-4 py-3 bg-gradient-to-r from-primary to-accent text-white rounded-lg hover:from-primary-light hover:to-accent transition-all shadow-md hover:shadow-lg whitespace-nowrap font-medium"
                 >
                   중복확인
                 </button>
@@ -231,7 +231,7 @@ export default function Login({ showRegister = true }: LoginProps) {
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
                 placeholder="회사명 (선택)"
-                className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                className="w-full p-3 bg-primary-dark/50 border-2 border-primary text-beige rounded-lg focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-primary-light"
               />
             </div>
           </>
@@ -242,7 +242,7 @@ export default function Login({ showRegister = true }: LoginProps) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="비밀번호"
-            className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+            className="w-full p-3 bg-primary-dark/50 border-2 border-primary text-beige rounded-lg focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-primary-light"
             required
           />
         </div>
@@ -253,7 +253,7 @@ export default function Login({ showRegister = true }: LoginProps) {
               value={passwordConfirm}
               onChange={(e) => setPasswordConfirm(e.target.value)}
               placeholder="비밀번호 확인"
-              className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+              className="w-full p-3 bg-primary-dark/50 border-2 border-primary text-beige rounded-lg focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-primary-light"
               required
             />
           </div>
@@ -262,7 +262,7 @@ export default function Login({ showRegister = true }: LoginProps) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl font-semibold text-lg"
+          className="w-full bg-gradient-to-r from-primary to-accent text-white p-4 rounded-lg hover:from-primary-light hover:to-accent disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl font-semibold text-lg"
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
@@ -278,7 +278,7 @@ export default function Login({ showRegister = true }: LoginProps) {
 
       {showRegister && (
         <div className="mt-6 text-center">
-          <p className="text-gray-600 mb-2">
+          <p className="text-primary-light mb-2">
             {isLoginMode ? '계정이 없으신가요?' : '이미 계정이 있으신가요?'}
           </p>
           <button
@@ -287,7 +287,7 @@ export default function Login({ showRegister = true }: LoginProps) {
               setError('');
               setSuccess('');
             }}
-            className="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors"
+            className="text-accent hover:text-primary-light font-semibold hover:underline transition-colors"
           >
             {isLoginMode ? '회원가입하기' : '로그인하기'}
           </button>

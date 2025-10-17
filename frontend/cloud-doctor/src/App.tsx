@@ -8,6 +8,8 @@ import Guide from "./components/Guide";
 import { AdminPage } from "./components/Admin";
 import Checklist from "./components/Checklist";
 import Prowler from "./components/Prowler";
+import Login from "./components/Login";
+import MyPage from "./components/MyPage";
 
 function AppContent() {
   const [showDemoModal, setShowDemoModal] = useState(false);
@@ -72,6 +74,8 @@ function AppContent() {
                 </motion.div>
               }
             />
+            <Route path="/login" element={<Login />} />
+            <Route path="/mypage" element={<MyPage />} />
             <Route path="/admin/*" element={<AdminPage />} />
           </Routes>
         </AnimatePresence>

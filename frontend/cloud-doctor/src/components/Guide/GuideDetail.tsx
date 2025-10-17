@@ -89,9 +89,9 @@ const GuideItem: React.FC<{ data: GuideItemProps }> = ({ data }) => {
         <button
           onClick={() => copyToClipboard(data.checkSteps)}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-medium shadow-lg hover:shadow-xl transition-all"
-          title="점검 기준 복사"
+          title="캡쳐가이드"
         >
-          📋 복사
+          📋 캡쳐가이드
         </button>
       </header>
 

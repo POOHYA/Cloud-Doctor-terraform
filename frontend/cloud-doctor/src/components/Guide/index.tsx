@@ -24,7 +24,10 @@ export default function Index() {
                 />
                 <div>
                   <h3 className="text-lg font-bold text-beige mb-1">EC2</h3>
-                  <p className="text-xs text-slate-400">No. 4 · 2025</p>
+                  <p className="text-sm text-slate-400">6 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 41건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -41,7 +44,10 @@ export default function Index() {
                 />
                 <div>
                   <h3 className="text-xl font-bold text-beige mb-2">S3</h3>
-                  <p className="text-sm text-gray-600">No. 3 · 2025</p>
+                  <p className="text-sm text-slate-400">3 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 20건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -58,7 +64,10 @@ export default function Index() {
                 />
                 <div>
                   <h3 className="text-xl font-bold text-beige mb-2">IAM</h3>
-                  <p className="text-sm text-gray-600">No. 3 · 2025</p>
+                  <p className="text-sm text-slate-400">9 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 152건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -75,7 +84,10 @@ export default function Index() {
                 />
                 <div>
                   <h3 className="text-xl font-bold text-beige mb-2">VPC</h3>
-                  <p className="text-sm text-gray-600">No. 3 · 2025</p>
+                  <p className="text-sm text-slate-400">2 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 5건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -92,7 +104,10 @@ export default function Index() {
                 />
                 <div>
                   <h3 className="text-xl font-bold text-beige mb-2">Lambda</h3>
-                  <p className="text-sm text-gray-600">No. 3 · 2025</p>
+                  <p className="text-sm text-slate-400">2 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 5건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -109,7 +124,10 @@ export default function Index() {
                 />
                 <div>
                   <h3 className="text-xl font-bold text-beige mb-2">RDS</h3>
-                  <p className="text-sm text-gray-600">No. 3 · 2025</p>
+                  <p className="text-sm text-slate-400">2 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 6건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -128,7 +146,10 @@ export default function Index() {
                   <h3 className="text-xl font-bold text-beige mb-2">
                     CloudTrail
                   </h3>
-                  <p className="text-sm text-gray-600">No. 3 · 2025</p>
+                  <p className="text-sm text-slate-400">2 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 5건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -145,7 +166,10 @@ export default function Index() {
                 />
                 <div>
                   <h3 className="text-xl font-bold text-beige mb-2">EKS</h3>
-                  <p className="text-sm text-gray-600">No. 4 · 2025</p>
+                  <p className="text-sm text-slate-400">1 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 7건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -162,7 +186,10 @@ export default function Index() {
                 />
                 <div>
                   <h3 className="text-xl font-bold text-beige mb-2">KMS</h3>
-                  <p className="text-sm text-gray-600">No. 4 · 2025</p>
+                  <p className="text-sm text-slate-400">1 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 3건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -179,7 +206,10 @@ export default function Index() {
                 />
                 <div>
                   <h3 className="text-xl font-bold text-beige mb-2">SNS</h3>
-                  <p className="text-sm text-gray-600">No. 4 · 2025</p>
+                  <p className="text-sm text-slate-400">1 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 3건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -196,7 +226,10 @@ export default function Index() {
                 />
                 <div>
                   <h3 className="text-xl font-bold text-beige mb-2">SQS</h3>
-                  <p className="text-sm text-gray-600">No. 4 · 2025</p>
+                  <p className="text-sm text-slate-400">1 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 2건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -213,7 +246,10 @@ export default function Index() {
                 />
                 <div>
                   <h3 className="text-xl font-bold text-beige mb-2">Route53</h3>
-                  <p className="text-sm text-gray-600">No. 4 · 2025</p>
+                  <p className="text-sm text-slate-400">1 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 7건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -232,7 +268,10 @@ export default function Index() {
                   <h3 className="text-xl font-bold text-beige mb-2">
                     Organizations
                   </h3>
-                  <p className="text-sm text-gray-600">No. 4 · 2025</p>
+                  <p className="text-sm text-slate-400">2 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 4건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -249,7 +288,10 @@ export default function Index() {
                 />
                 <div>
                   <h3 className="text-xl font-bold text-beige mb-2">ECR</h3>
-                  <p className="text-sm text-gray-600">No. 4 · 2025</p>
+                  <p className="text-sm text-slate-400">1 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 3건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -266,7 +308,10 @@ export default function Index() {
                 />
                 <div>
                   <h3 className="text-xl font-bold text-beige mb-2">SSM</h3>
-                  <p className="text-sm text-gray-600">No. 4 · 2025</p>
+                  <p className="text-sm text-slate-400">2 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 4건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -285,7 +330,10 @@ export default function Index() {
                   <h3 className="text-xl font-bold text-beige mb-2">
                     GuardDuty
                   </h3>
-                  <p className="text-sm text-gray-600">No. 4 · 2025</p>
+                  <p className="text-sm text-slate-400">1 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 3건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -302,7 +350,10 @@ export default function Index() {
                 />
                 <div>
                   <h3 className="text-xl font-bold text-beige mb-2">Cognito</h3>
-                  <p className="text-sm text-gray-600">No. 4 · 2025</p>
+                  <p className="text-sm text-slate-400">3 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 9건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -321,7 +372,10 @@ export default function Index() {
                   <h3 className="text-xl font-bold text-beige mb-2">
                     CloudFormation
                   </h3>
-                  <p className="text-sm text-gray-600">No. 4 · 2025</p>
+                  <p className="text-sm text-slate-400">1 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 4건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -340,7 +394,10 @@ export default function Index() {
                   <h3 className="text-xl font-bold text-beige mb-2">
                     OpenSearch
                   </h3>
-                  <p className="text-sm text-gray-600">No. 4 · 2025</p>
+                  <p className="text-sm text-slate-400">1 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 2건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -359,7 +416,10 @@ export default function Index() {
                   <h3 className="text-xl font-bold text-beige mb-2">
                     Elastic Beanstalk
                   </h3>
-                  <p className="text-sm text-gray-600">No. 4 · 2025</p>
+                  <p className="text-sm text-slate-400">1 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 3건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -378,7 +438,10 @@ export default function Index() {
                   <h3 className="text-xl font-bold text-beige mb-2">
                     Redshift
                   </h3>
-                  <p className="text-sm text-gray-600">No. 4 · 2025</p>
+                  <p className="text-sm text-slate-400">1 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 2건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -395,7 +458,10 @@ export default function Index() {
                 />
                 <div>
                   <h3 className="text-xl font-bold text-beige mb-2">Glue</h3>
-                  <p className="text-sm text-gray-600">No. 4 · 2025</p>
+                  <p className="text-sm text-slate-400">1 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 3건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -414,7 +480,10 @@ export default function Index() {
                   <h3 className="text-xl font-bold text-beige mb-2">
                     Service Catalog
                   </h3>
-                  <p className="text-sm text-gray-600">No. 4 · 2025</p>
+                  <p className="text-sm text-slate-400">1 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 3건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -433,7 +502,10 @@ export default function Index() {
                   <h3 className="text-xl font-bold text-beige mb-2">
                     DocumentDB
                   </h3>
-                  <p className="text-sm text-gray-600">No. 4 · 2025</p>
+                  <p className="text-sm text-slate-400">1 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 2건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -450,7 +522,10 @@ export default function Index() {
                 />
                 <div>
                   <h3 className="text-xl font-bold text-beige mb-2">Bedrock</h3>
-                  <p className="text-sm text-gray-600">No. 4 · 2025</p>
+                  <p className="text-sm text-slate-400">1 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 4건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -467,7 +542,10 @@ export default function Index() {
                 />
                 <div>
                   <h3 className="text-xl font-bold text-beige mb-2">SES</h3>
-                  <p className="text-sm text-gray-600">No. 4 · 2025</p>
+                  <p className="text-sm text-slate-400">1 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 2건
+                  </p>
                 </div>
               </div>
             </Link>
@@ -486,7 +564,10 @@ export default function Index() {
                   <h3 className="text-xl font-bold text-beige mb-2">
                     AppStream 2.0
                   </h3>
-                  <p className="text-sm text-gray-600">No. 4 · 2025</p>
+                  <p className="text-sm text-slate-400">1 항목</p>
+                  <p className="text-sm text-slate-400">
+                    사고사례 및 공격기법 2건
+                  </p>
                 </div>
               </div>
             </Link>
