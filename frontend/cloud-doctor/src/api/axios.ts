@@ -11,7 +11,14 @@ const axiosInstance = axios.create({
 });
 
 axiosInstance.interceptors.request.use(
-  (config) => config,
+  (config) => {
+    // 로컬 환경에서 localStorage에 토큰이 있으면 Authorization 헤더 추가
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
   (error) => Promise.reject(error)
 );
 
@@ -31,6 +38,8 @@ axiosInstance.interceptors.response.use(
         sessionStorage.removeItem('username');
         sessionStorage.removeItem('role');
         sessionStorage.removeItem('fullName');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
         
         alert('로그인 세션이 만료되었습니다. 다시 로그인해주세요.');
         
@@ -62,6 +71,8 @@ axiosInstance.interceptors.response.use(
           sessionStorage.removeItem('username');
           sessionStorage.removeItem('role');
           sessionStorage.removeItem('fullName');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
           
           alert('로그인 세션이 만료되었습니다. 다시 로그인해주세요.');
           
