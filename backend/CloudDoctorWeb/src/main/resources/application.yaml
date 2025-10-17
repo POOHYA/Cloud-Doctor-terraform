@@ -34,4 +34,4 @@ jwt:
   refresh-token-expiration: ${REFRESH_TOKEN_EXPIRATION}   # 120000 = 2분 (밀리초)
 
 cookie:
-  secure: ${COOKIE_SECURE:false}  # 로컬(HTTP): false, 터널(HTTPS): true
+  secure: ${COOKIE_SECURE:false}  # 환경별 설정

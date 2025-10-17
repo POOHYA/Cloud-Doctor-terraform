@@ -89,44 +89,48 @@ public class AuthController {
         String userAgent = request.getHeader("User-Agent");
         TokenResponse tokenResponse = authService.login(loginRequest, userAgent);
         
-        // Access Token - HttpOnly 쿠키
-        Cookie accessCookie = new Cookie("accessToken", tokenResponse.getAccessToken());
-        accessCookie.setHttpOnly(true);
-        accessCookie.setSecure(cookieSecure);
-        accessCookie.setPath("/");
-        accessCookie.setMaxAge((int) (accessTokenExpiration / 1000));
-        response.addCookie(accessCookie);
+        // 환경 구분: Origin 헤더 또는 Profile로 판단
+        String origin = request.getHeader("Origin");
+        boolean isLocal = (origin != null && origin.contains("localhost")) || 
+                         "dev".equals(activeProfile) || "local".equals(activeProfile);
         
-        // SameSite=None 설정 (도메인 간 쿠키 전달용)
-        response.addHeader("Set-Cookie", String.format(
-            "accessToken=%s; Path=/; Max-Age=%d; HttpOnly; %sSameSite=None",
-            tokenResponse.getAccessToken(),
-            (int) (accessTokenExpiration / 1000),
-            cookieSecure ? "Secure; " : ""
-        ));
+        if (isLocal) {
+            // 로컬 개발환경: SameSite=Lax, Secure=false
+            response.addHeader("Set-Cookie", String.format(
+                "accessToken=%s; Path=/; Max-Age=%d; HttpOnly; SameSite=Lax",
+                tokenResponse.getAccessToken(),
+                (int) (accessTokenExpiration / 1000)
+            ));
+            
+            response.addHeader("Set-Cookie", String.format(
+                "refreshToken=%s; Path=/; Max-Age=%d; HttpOnly; SameSite=Lax",
+                tokenResponse.getRefreshToken(),
+                (int) (refreshTokenExpiration / 1000)
+            ));
+        } else {
+            // 프로덕션 환경: SameSite=None, Secure=true (Cross-Site 지원)
+            response.addHeader("Set-Cookie", String.format(
+                "accessToken=%s; Path=/; Max-Age=%d; HttpOnly; SameSite=None; Secure; Domain=.takustory.site",
+                tokenResponse.getAccessToken(),
+                (int) (accessTokenExpiration / 1000)
+            ));
+            
+            response.addHeader("Set-Cookie", String.format(
+                "refreshToken=%s; Path=/; Max-Age=%d; HttpOnly; SameSite=None; Secure; Domain=.takustory.site",
+                tokenResponse.getRefreshToken(),
+                (int) (refreshTokenExpiration / 1000)
+            ));
+        }
         
-        // Refresh Token - HttpOnly 쿠키
-        Cookie refreshCookie = new Cookie("refreshToken", tokenResponse.getRefreshToken());
-        refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(cookieSecure);
-        refreshCookie.setPath("/");
-        refreshCookie.setMaxAge((int) (refreshTokenExpiration / 1000));
-        response.addCookie(refreshCookie);
-        
-        response.addHeader("Set-Cookie", String.format(
-            "refreshToken=%s; Path=/; Max-Age=%d; HttpOnly; %sSameSite=None",
-            tokenResponse.getRefreshToken(),
-            (int) (refreshTokenExpiration / 1000),
-            cookieSecure ? "Secure; " : ""
-        ));
+        log.info("쿠키 설정 완료: accessToken, refreshToken");
         
         Map<String, String> result = new HashMap<>();
         result.put("message", "로그인 성공");
         result.put("username", loginRequest.getUsername());
         result.put("role", tokenResponse.getTokenType());
         
-        // 개발 환경에서만 토큰 노출 (Swagger 테스트용)
-        if ("dev".equals(activeProfile) || "local".equals(activeProfile)) {
+        // 로컬 개발환경에서는 쿠키 대신 Bearer 토큰 사용
+        if (isLocal) {
             result.put("accessToken", tokenResponse.getAccessToken());
             result.put("refreshToken", tokenResponse.getRefreshToken());
         }
@@ -156,12 +160,9 @@ public class AuthController {
             authService.logout(refreshToken);
         }
         
-        // Access Token 쿠키만 삭제
-        Cookie accessCookie = new Cookie("accessToken", null);
-        accessCookie.setHttpOnly(true);
-        accessCookie.setPath("/");
-        accessCookie.setMaxAge(0);
-        response.addCookie(accessCookie);
+        // 모든 쿠키 삭제
+        response.addHeader("Set-Cookie", "accessToken=; Path=/; Max-Age=0; HttpOnly");
+        response.addHeader("Set-Cookie", "refreshToken=; Path=/; Max-Age=0; HttpOnly");
         
         return ResponseEntity.ok().build();
     }
@@ -194,16 +195,20 @@ public class AuthController {
         // 새 Access Token만 발급
         Cookie accessCookie = new Cookie("accessToken", tokenResponse.getAccessToken());
         accessCookie.setHttpOnly(true);
-        accessCookie.setSecure(cookieSecure);
+        accessCookie.setSecure(true);  // Cross-Site에 필수
         accessCookie.setPath("/");
         accessCookie.setMaxAge((int) (accessTokenExpiration / 1000));
         response.addCookie(accessCookie);
         
+        String sameSite = "SameSite=None";
+        String secure = "Secure; ";
+        
         response.addHeader("Set-Cookie", String.format(
-            "accessToken=%s; Path=/; Max-Age=%d; HttpOnly; %sSameSite=None",
+            "accessToken=%s; Path=/; Max-Age=%d; HttpOnly; %s%s",
             tokenResponse.getAccessToken(),
             (int) (accessTokenExpiration / 1000),
-            cookieSecure ? "Secure; " : ""
+            secure,
+            sameSite
         ));
         
         Map<String, String> result = new HashMap<>();

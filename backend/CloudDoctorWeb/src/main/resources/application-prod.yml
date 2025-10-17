@@ -1,0 +1,64 @@
+spring:
+  profiles:
+    active: prod
+  
+  datasource:
+    url: jdbc:postgresql://your-rds-endpoint:5432/clouddoctor
+    username: clouddoctor
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  
+  data:
+    redis:
+      host: your-elasticache-endpoint
+      port: 6379
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  
+  # 정적 파일 서빙 설정
+  web:
+    resources:
+      static-locations: 
+        - classpath:/static/
+        - file:/opt/clouddoctor/static/
+      cache:
+        period: 31536000  # 1년 캐싱
+
+server:
+  port: 9090
+  servlet:
+    context-path: /
+
+# JWT 설정
+jwt:
+  secret: ${JWT_SECRET:cloudDoctorSecretKeyForJwtTokenGeneration2024}
+  access-token-expiration: 60000    # 1분 (테스트용)
+  refresh-token-expiration: 120000  # 2분 (테스트용)
+
+# 쿠키 설정
+cookie:
+  secure: true  # HTTPS 환경
+
+# AWS 설정
+aws:
+  s3:
+    bucket: your-s3-bucket-name
+    region: ap-northeast-2
+
+# 로깅 설정
+logging:
+  level:
+    com.ksj.clouddoctorweb: INFO
+    org.springframework.security: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: /opt/clouddoctor/app.log

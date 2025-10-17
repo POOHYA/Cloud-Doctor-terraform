@@ -1,0 +1,105 @@
+pipeline {
+    agent any
+    
+    environment {
+        DB_PASSWORD = credentials('clouddoctor-db-password')
+        AWS_REGION = 'ap-northeast-2'
+        SPRING_PROFILES_ACTIVE = 'prod'
+    }
+    
+    tools {
+        jdk 'JDK-17'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                dir('backend/CloudDoctorWeb') {
+                    sh '''
+                        chmod +x gradlew
+                        ./gradlew clean build -x test
+                    '''
+                }
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                dir('backend/CloudDoctorWeb') {
+                    sh './gradlew test'
+                }
+            }
+            post {
+                always {
+                    publishTestResults testResultsPattern: 'backend/CloudDoctorWeb/build/test-results/test/*.xml'
+                }
+            }
+        }
+        
+        stage('Stop Previous Application') {
+            steps {
+                sh '''
+                    # 기존 애플리케이션 종료
+                    pkill -f "clouddoctor.*jar" || true
+                    sleep 5
+                '''
+            }
+        }
+        
+        stage('Deploy') {
+            steps {
+                dir('backend/CloudDoctorWeb') {
+                    sh '''
+                        # JAR 파일 백업
+                        if [ -f /opt/clouddoctor/clouddoctor.jar ]; then
+                            cp /opt/clouddoctor/clouddoctor.jar /opt/clouddoctor/clouddoctor.jar.backup
+                        fi
+                        
+                        # 새 JAR 파일 배포
+                        sudo mkdir -p /opt/clouddoctor
+                        sudo cp build/libs/*.jar /opt/clouddoctor/clouddoctor.jar
+                        
+                        # 애플리케이션 시작
+                        nohup java -jar \
+                            -Dspring.profiles.active=prod \
+                            -Dserver.port=9090 \
+                            -Dspring.datasource.password=${DB_PASSWORD} \
+                            /opt/clouddoctor/clouddoctor.jar > /opt/clouddoctor/app.log 2>&1 &
+                        
+                        # 헬스체크 대기
+                        sleep 30
+                        curl -f http://localhost:9090/health || exit 1
+                    '''
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Backend deployment successful!'
+        }
+        failure {
+            sh '''
+                # 실패 시 백업 파일로 롤백
+                if [ -f /opt/clouddoctor/clouddoctor.jar.backup ]; then
+                    sudo cp /opt/clouddoctor/clouddoctor.jar.backup /opt/clouddoctor/clouddoctor.jar
+                    nohup java -jar \
+                        -Dspring.profiles.active=prod \
+                        -Dserver.port=9090 \
+                        /opt/clouddoctor/clouddoctor.jar > /opt/clouddoctor/app.log 2>&1 &
+                fi
+            '''
+            echo 'Backend deployment failed! Rolled back to previous version.'
+        }
+    }
+}

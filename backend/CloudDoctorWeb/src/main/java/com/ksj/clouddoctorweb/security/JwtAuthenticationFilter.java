@@ -44,16 +44,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 1. 쿠키에서 토큰 추출
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
-            log.info("쿠키 개수: {}", cookies.length);
+            log.info("쿠키 개수: {}, Origin: {}", cookies.length, request.getHeader("Origin"));
             for (Cookie cookie : cookies) {
                 log.info("쿠키: {}={}", cookie.getName(), cookie.getValue().substring(0, Math.min(20, cookie.getValue().length())) + "...");
                 if ("accessToken".equals(cookie.getName())) {
                     jwt = cookie.getValue();
+                    log.info("accessToken 쿠키 발견!");
                     break;
                 }
             }
         } else {
-            log.info("쿠키 없음");
+            log.info("쿠키 없음, Origin: {}, User-Agent: {}", request.getHeader("Origin"), request.getHeader("User-Agent"));
         }
         
         // 2. 쿠키에 없으면 Authorization 헤더 확인 (Swagger 등을 위해)
@@ -73,6 +74,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         refreshToken = cookie.getValue();
                         break;
                     }
+                }
+            }
+            
+            // Refresh Token으로 자동 갱신 시도
+            if (refreshToken != null && isAuthRequiredEndpoint(requestURI)) {
+                try {
+                    if (jwtService.validateRefreshToken(refreshToken, userAgent)) {
+                        String username = jwtService.extractUsername(refreshToken);
+                        User user = userRepository.findByUsername(username).orElse(null);
+                        if (user != null && user.getIsActive()) {
+                            // 새 Access Token 생성
+                            String newAccessToken = jwtService.generateAccessToken(user, userAgent);
+                            
+                            // 새 쿠키 설정
+                            Cookie newAccessCookie = new Cookie("accessToken", newAccessToken);
+                            newAccessCookie.setHttpOnly(true);
+                            newAccessCookie.setPath("/");
+                            newAccessCookie.setMaxAge(300); // 5분
+                            response.addCookie(newAccessCookie);
+                            
+                            // 인증 설정
+                            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                                username, null, Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
+                            );
+                            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                            SecurityContextHolder.getContext().setAuthentication(authToken);
+                            
+                            log.info("토큰 자동 갱신 성공: {}", username);
+                            filterChain.doFilter(request, response);
+                            return;
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("Refresh Token 갱신 실패: {}", e.getMessage());
                 }
             }
             
@@ -96,10 +131,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             username = jwtService.extractUsername(jwt);
         } catch (Exception e) {
-            log.warn("토큰에서 사용자명 추출 실패 (토큰 만료): {}", e.getMessage());
+            log.error("토큰 파싱 실패: {}, 토큰 타입: {}", e.getMessage(), jwt.substring(0, Math.min(50, jwt.length())));
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
-            response.getWriter().write("{\"error\":\"Token expired\", \"logout\": true}");
+            response.getWriter().write("{\"error\":\"Invalid token format\", \"logout\": true}");
             return;
         }
         
@@ -147,7 +182,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      */
     private boolean isAuthRequiredEndpoint(String requestURI) {
         return requestURI.startsWith("/admin/") || 
-               requestURI.equals("/api/my-external-id") ||
-               requestURI.startsWith("/api/user/");
+               requestURI.equals("/api/my-external-id");
     }
 }

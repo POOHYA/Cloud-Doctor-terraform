@@ -1,0 +1,143 @@
+pipeline {
+    agent any
+    
+    environment {
+        NODE_VERSION = '18'
+        REACT_APP_API_URL = 'https://cloud-doctor.site'
+    }
+    
+    tools {
+        nodejs "${NODE_VERSION}"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Install Dependencies') {
+            steps {
+                dir('frontend/cloud-doctor') {
+                    sh '''
+                        npm ci
+                    '''
+                }
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                dir('frontend/cloud-doctor') {
+                    sh '''
+                        npm run build
+                    '''
+                }
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                dir('frontend/cloud-doctor') {
+                    sh '''
+                        npm test -- --coverage --watchAll=false
+                    '''
+                }
+            }
+            post {
+                always {
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'frontend/cloud-doctor/coverage/lcov-report',
+                        reportFiles: 'index.html',
+                        reportName: 'Coverage Report'
+                    ])
+                }
+            }
+        }
+        
+        stage('Deploy to Nginx') {
+            steps {
+                dir('frontend/cloud-doctor') {
+                    sh '''
+                        # Nginx 설치 (처음 실행 시)
+                        if ! command -v nginx &> /dev/null; then
+                            sudo yum update -y
+                            sudo amazon-linux-extras install nginx1 -y
+                        fi
+                        
+                        # 기존 파일 백업
+                        if [ -d /var/www/html ]; then
+                            sudo cp -r /var/www/html /var/www/html.backup.$(date +%Y%m%d_%H%M%S)
+                        fi
+                        
+                        # 빌드된 파일 배포
+                        sudo mkdir -p /var/www/html
+                        sudo cp -r build/* /var/www/html/
+                        
+                        # Nginx 설정
+                        sudo tee /etc/nginx/conf.d/clouddoctor.conf > /dev/null <<EOF
+server {
+    listen 80;
+    server_name cloud-doctor.site www.cloud-doctor.site;
+    root /var/www/html;
+    index index.html;
+    
+    # React Router 지원
+    location / {
+        try_files \\$uri \\$uri/ /index.html;
+    }
+    
+    # API 프록시
+    location /api/ {
+        proxy_pass http://localhost:9090;
+        proxy_set_header Host \\$host;
+        proxy_set_header X-Real-IP \\$remote_addr;
+        proxy_set_header X-Forwarded-For \\$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \\$scheme;
+    }
+    
+    location /admin/ {
+        proxy_pass http://localhost:9090;
+        proxy_set_header Host \\$host;
+        proxy_set_header X-Real-IP \\$remote_addr;
+        proxy_set_header X-Forwarded-For \\$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \\$scheme;
+    }
+    
+    # 정적 파일 캐싱
+    location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
+EOF
+                        
+                        # Nginx 시작/재시작
+                        sudo systemctl enable nginx
+                        sudo systemctl restart nginx
+                        
+                        # 헬스체크
+                        sleep 5
+                        curl -f http://localhost/ || exit 1
+                    '''
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Frontend deployment successful!'
+        }
+        failure {
+            echo 'Frontend deployment failed!'
+        }
+    }
+}
