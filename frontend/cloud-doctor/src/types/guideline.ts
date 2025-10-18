@@ -9,7 +9,7 @@ export interface GuidelineDetail {
   title: string;
   serviceId: string;
   serviceName: string;
-  priority: 'confirm' | 'important' | 'urgent';
+  priority: "confirm" | "important" | "urgent";
   content: {
     whyDangerous: string;
     whatHappens: string;

@@ -16,14 +16,15 @@ function AppContent() {
   const [showDemoModal, setShowDemoModal] = useState(false);
   const location = useLocation();
   const isMainPage = location.pathname === "/";
+  const isAdminPage = location.pathname.startsWith("/admin");
 
   return (
     <div
       className={isMainPage ? "" : "min-h-screen bg-background flex flex-col"}
     >
-      {!isMainPage && <Header />}
+      {!isMainPage && !isAdminPage && <Header />}
 
-      <main className={isMainPage ? "" : "flex-1 p-6 pt-20"}>
+      <main className={isMainPage ? "" : isAdminPage ? "" : "flex-1 p-6 pt-20"}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<MainPage />} />
@@ -85,7 +86,9 @@ function AppContent() {
           </Routes>
         </AnimatePresence>
       </main>
-      {!isMainPage && <Footer onDemoClick={() => setShowDemoModal(true)} />}
+      {!isMainPage && !isAdminPage && (
+        <Footer onDemoClick={() => setShowDemoModal(true)} />
+      )}
     </div>
   );
 }

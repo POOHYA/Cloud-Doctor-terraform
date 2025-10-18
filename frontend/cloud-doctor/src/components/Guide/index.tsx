@@ -51,15 +51,20 @@ function Index() {
                   className="block p-4 bg-primary-dark/50 backdrop-blur-xl border border-primary rounded-2xl shadow-xl hover:bg-primary-dark/70 hover:border-accent transition-all hover:scale-105"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-24 h-24 rounded-lg bg-primary-light/20 flex items-center justify-center text-4xl">
-                      📋
-                    </div>
+                    <img
+                      className="w-24 h-24 rounded-lg object-cover"
+                      alt=""
+                      src={`../img/aws-icon/${service.displayName}.svg`}
+                    />
                     <div>
                       <h3 className="text-xl font-bold text-beige mb-2">
                         {service.displayName}
                       </h3>
                       <p className="text-sm text-slate-400">
                         총 {service.guidelineCount}개 항목
+                      </p>
+                      <p className="text-sm text-slate-400">
+                        사고사례 및 공격기법 {service.serviceRealCaseCount}건
                       </p>
                     </div>
                   </div>

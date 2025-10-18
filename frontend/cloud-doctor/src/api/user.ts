@@ -1,8 +1,8 @@
-import axios from './axios';
+import axios from "./axios";
 
 export const userApi = {
   getProviders: async () => {
-    const { data } = await axios.get('/api/providers');
+    const { data } = await axios.get("/api/providers");
     return data;
   },
 
@@ -12,7 +12,7 @@ export const userApi = {
   },
 
   getGuidelines: async () => {
-    const { data } = await axios.get('/api/guidelines');
+    const { data } = await axios.get("/api/guidelines");
     return data;
   },
 
@@ -21,13 +21,20 @@ export const userApi = {
     return data;
   },
 
+  getChecklists: async () => {
+    const { data } = await axios.get("/api/checklists");
+    return data;
+  },
+
   getChecklistsByGuideline: async (guidelineId: number) => {
-    const { data } = await axios.get(`/api/checklists/guideline/${guidelineId}`);
+    const { data } = await axios.get(
+      `/api/checklists/guideline/${guidelineId}`
+    );
     return data;
   },
 
   getUserChecklists: async (userId: number) => {
     const { data } = await axios.get(`/api/user-checklists/${userId}`);
     return data;
-  }
+  },
 };

@@ -199,53 +199,15 @@ export const adminApi = {
     return data;
   },
 
-  getAdminChecklists: async (): Promise<any[]> => {
-    const { data } = await axios.get("/admin/checklists");
-    return data;
-  },
-
-  createChecklist: async (checklistData: any): Promise<void> => {
-    await axios.post("/admin/checklists", checklistData);
-  },
-
-  deleteAdminChecklist: async (id: string | number): Promise<void> => {
-    await axios.delete(`/admin/checklists/${id}`);
-  },
-};
   createGuideline: async (guidelineData: {
     title: string;
-    cloudProviderId: number;
-    serviceListId: number;
     importanceLevel: string;
     whyDangerous: string;
     whatHappens: string;
-    checkStandard: string;
-    solutionText?: string;
-    sideEffects?: string;
-    note?: string;
-    links?: string[];
-  }): Promise<void> => {
-    await axios.post('/admin/guidelines', guidelineData);
-  },
-
-  getGuideline: async (id: number): Promise<any> => {
-    const { data } = await axios.get(`/admin/guidelines/${id}`);
-    return data;
-  },
-
-  updateGuideline: async (id: number, guidelineData: {
-    title: string;
+    checkCriteria: string;
     cloudProviderId: number;
     serviceListId: number;
-    importanceLevel: string;
-    whyDangerous: string;
-    whatHappens: string;
-    checkStandard: string;
-    solutionText?: string;
-    sideEffects?: string;
-    note?: string;
-    links?: string[];
   }): Promise<void> => {
-    await axios.put(`/admin/guidelines/${id}`, guidelineData);
-  }
+    await axios.post("/admin/guidelines", guidelineData);
+  },
 };
