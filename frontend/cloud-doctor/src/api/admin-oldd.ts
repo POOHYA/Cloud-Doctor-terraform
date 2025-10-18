@@ -199,20 +199,15 @@ export const adminApi = {
     return data;
   },
 
-  createGuideline: async (guidelineData: any): Promise<void> => {
+  createGuideline: async (guidelineData: {
+    title: string;
+    importanceLevel: string;
+    whyDangerous: string;
+    whatHappens: string;
+    checkCriteria: string;
+    cloudProviderId: number;
+    serviceListId: number;
+  }): Promise<void> => {
     await axios.post("/admin/guidelines", guidelineData);
-  },
-
-  getAdminChecklists: async (): Promise<any[]> => {
-    const { data } = await axios.get("/admin/checklists");
-    return data;
-  },
-
-  createChecklist: async (checklistData: any): Promise<void> => {
-    await axios.post("/admin/checklists", checklistData);
-  },
-
-  deleteAdminChecklist: async (id: string | number): Promise<void> => {
-    await axios.delete(`/admin/checklists/${id}`);
   },
 };
