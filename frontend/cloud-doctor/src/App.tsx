@@ -10,6 +10,7 @@ import Checklist from "./components/Checklist";
 import Prowler from "./components/Prowler";
 import Login from "./components/Login";
 import MyPage from "./components/MyPage";
+import AuditCheck from "./components/AuditCheck";
 
 function AppContent() {
   const [showDemoModal, setShowDemoModal] = useState(false);
@@ -71,6 +72,19 @@ function AppContent() {
                   transition={{ duration: 0.3 }}
                 >
                   <Checklist />
+                </motion.div>
+              }
+            />
+            <Route
+              path="/auditcheck"
+              element={
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <AuditCheck />
                 </motion.div>
               }
             />

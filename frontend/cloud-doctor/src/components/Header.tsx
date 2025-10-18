@@ -78,6 +78,25 @@ const Header: React.FC = () => {
                   ></span>
                 </Link>
               </li>
+              <li>
+                <Link
+                  to="/auditcheck"
+                  className={`relative py-2 px-1 transition-all duration-300 group ${
+                    location.pathname === "/auditcheck"
+                      ? "text-amber-400"
+                      : "text-slate-300 hover:text-amber-400"
+                  }`}
+                >
+                  CaC
+                  <span
+                    className={`absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-amber-500 to-orange-600 transform transition-transform duration-300 ${
+                      location.pathname === "/auditcheck"
+                        ? "scale-x-100"
+                        : "scale-x-0 group-hover:scale-x-100"
+                    }`}
+                  ></span>
+                </Link>
+              </li>
             </ul>
           </nav>
           <div className="flex gap-3">
@@ -150,6 +169,15 @@ const Header: React.FC = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   체크리스트
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/auditcheck"
+                  className="block text-violet-400 hover:text-violet-300 transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  CaC
                 </Link>
               </li>
               <li>
