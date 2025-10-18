@@ -12,6 +12,7 @@ const Header: React.FC = () => {
 
   const handleLogout = async () => {
     await adminApi.logout();
+    window.scrollTo(0, 0);
     window.location.reload();
   };
   return (
@@ -112,6 +113,7 @@ const Header: React.FC = () => {
               <>
                 <Link
                   to="/mypage"
+                  onClick={() => window.scrollTo(0, 0)}
                   className="px-4 py-2 rounded-lg bg-gradient-to-r from-primary to-accent text-white hover:from-primary-light hover:to-accent shadow-md transition-all"
                 >
                   마이페이지
@@ -126,6 +128,7 @@ const Header: React.FC = () => {
             ) : (
               <Link
                 to="/login"
+                onClick={() => window.scrollTo(0, 0)}
                 className="px-4 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white transition-all"
               >
                 로그인
@@ -205,7 +208,10 @@ const Header: React.FC = () => {
                     <Link
                       to="/mypage"
                       className="block text-primary-light"
-                      onClick={() => setIsMenuOpen(false)}
+                      onClick={() => {
+                        window.scrollTo(0, 0);
+                        setIsMenuOpen(false);
+                      }}
                     >
                       마이페이지
                     </Link>
@@ -227,7 +233,10 @@ const Header: React.FC = () => {
                   <Link
                     to="/login"
                     className="block text-slate-300"
-                    onClick={() => setIsMenuOpen(false)}
+                    onClick={() => {
+                      window.scrollTo(0, 0);
+                      setIsMenuOpen(false);
+                    }}
                   >
                     로그인
                   </Link>

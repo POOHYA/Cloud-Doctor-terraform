@@ -17,9 +17,12 @@ export default function ChecklistGenerator({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [checklists, setChecklists] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadServices();
+    loadChecklists();
   }, [providerId]);
 
   useEffect(() => {
@@ -33,17 +36,30 @@ export default function ChecklistGenerator({
       const data = await adminApi.getServicesByProvider(providerId);
       setServices(data);
     } catch (error) {
-      console.error('서비스 로드 실패:', error);
+      console.error("서비스 로드 실패:", error);
     }
   };
 
   const loadGuidelines = async () => {
     try {
-      const data = await adminApi.getGuidelinesByService(parseInt(selectedService));
+      const data = await adminApi.getGuidelinesByService(
+        parseInt(selectedService)
+      );
       setGuidelines(data);
       setGuidelineId("");
     } catch (error) {
       console.error("가이드라인 로드 실패:", error);
+    }
+  };
+
+  const loadChecklists = async () => {
+    try {
+      const data = await adminApi.getAdminChecklists();
+      setChecklists(data);
+    } catch (error) {
+      console.error("체크리스트 로드 실패:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,6 +78,7 @@ export default function ChecklistGenerator({
       setGuidelineId("");
       setTitle("");
       setDescription("");
+      await loadChecklists();
       alert("체크리스트가 성공적으로 추가되었습니다.");
     } catch (error: any) {
       console.error("체크리스트 추가 실패:", error);
@@ -141,6 +158,64 @@ export default function ChecklistGenerator({
             {submitting ? "추가 중..." : "체크리스트 추가"}
           </button>
         </form>
+      </div>
+
+      <div className="bg-surface rounded-lg shadow-md p-6 mt-6">
+        <h2 className="text-xl font-bold mb-4 text-primary-dark">
+          등록된 체크리스트
+        </h2>
+
+        {loading ? (
+          <div className="text-center py-8 text-beige">로딩 중...</div>
+        ) : checklists.length === 0 ? (
+          <div className="text-center py-8 text-primary-dark/60">
+            <p className="text-lg">등록된 체크리스트가 없습니다.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {checklists.map((checklist) => (
+              <div
+                key={checklist.id}
+                className="flex items-center justify-between p-4 bg-white rounded-md border"
+              >
+                <div className="flex-1">
+                  <div className="font-medium text-primary-dark">
+                    {checklist.title}
+                  </div>
+                  {checklist.guideline && (
+                    <div className="text-sm text-gray-600 mt-1">
+                      가이드라인: {checklist.guideline.title}
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={async () => {
+                    if (
+                      window.confirm(
+                        `'${checklist.title}' 체크리스트를 삭제하시겠습니까?`
+                      )
+                    ) {
+                      try {
+                        await adminApi.deleteAdminChecklist(checklist.id);
+                        await loadChecklists();
+                        alert("체크리스트가 삭제되었습니다.");
+                      } catch (error: any) {
+                        console.error("체크리스트 삭제 실패:", error);
+                        alert(
+                          error.response?.data?.message ||
+                            "체크리스트 삭제에 실패했습니다."
+                        );
+                      }
+                    }
+                  }}
+                  className="text-red-500 hover:text-red-700 px-3 py-1 rounded"
+                >
+                  삭제
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
