@@ -1,11 +1,19 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import ContactModal from "./ContactModal";
+import { adminApi } from "../api/admin";
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const isLoggedIn = !!sessionStorage.getItem('username');
+
+  const handleLogout = async () => {
+    await adminApi.logout();
+    window.location.reload();
+  };
   return (
     <header className="fixed w-full top-0 left-0 z-50 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 shadow-2xl border-b border-slate-700">
       <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -87,7 +95,7 @@ const Header: React.FC = () => {
                       : "text-slate-300 hover:text-amber-400"
                   }`}
                 >
-                  CaC
+                  보안 점검
                   <span
                     className={`absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-amber-500 to-orange-600 transform transition-transform duration-300 ${
                       location.pathname === "/auditcheck"
@@ -100,18 +108,29 @@ const Header: React.FC = () => {
             </ul>
           </nav>
           <div className="flex gap-3">
-            <Link
-              to="/login"
-              className="px-4 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white transition-all"
-            >
-              로그인
-            </Link>
-            <Link
-              to="/mypage"
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-primary to-accent text-white hover:from-primary-light hover:to-accent shadow-md transition-all"
-            >
-              마이페이지
-            </Link>
+            {isLoggedIn ? (
+              <>
+                <Link
+                  to="/mypage"
+                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-primary to-accent text-white hover:from-primary-light hover:to-accent shadow-md transition-all"
+                >
+                  마이페이지
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white transition-all"
+                >
+                  로그아웃
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                className="px-4 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white transition-all"
+              >
+                로그인
+              </Link>
+            )}
           </div>
         </div>
 
@@ -180,24 +199,40 @@ const Header: React.FC = () => {
                   CaC
                 </Link>
               </li>
-              <li>
-                <Link
-                  to="/login"
-                  className="block text-slate-300"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  로그인
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/mypage"
-                  className="block text-primary-light"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  마이페이지
-                </Link>
-              </li>
+              {isLoggedIn ? (
+                <>
+                  <li>
+                    <Link
+                      to="/mypage"
+                      className="block text-primary-light"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      마이페이지
+                    </Link>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setIsMenuOpen(false);
+                      }}
+                      className="block text-slate-300 w-full text-left"
+                    >
+                      로그아웃
+                    </button>
+                  </li>
+                </>
+              ) : (
+                <li>
+                  <Link
+                    to="/login"
+                    className="block text-slate-300"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    로그인
+                  </Link>
+                </li>
+              )}
             </ul>
           </nav>
         </div>

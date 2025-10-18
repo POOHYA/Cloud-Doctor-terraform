@@ -6,7 +6,13 @@ app = FastAPI(title="CloudDoctor InfraAudit API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "https://localhost:3000",
+        "https://localhost:3001",
+        "https://web.takustory.site"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -20,4 +26,10 @@ async def health():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=8000,
+        ssl_keyfile="../frontend/cloud-doctor/localhost-key.pem",
+        ssl_certfile="../frontend/cloud-doctor/localhost.pem"
+    )

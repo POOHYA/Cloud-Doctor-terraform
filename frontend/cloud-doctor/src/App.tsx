@@ -28,7 +28,7 @@ function AppContent() {
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<MainPage />} />
             <Route
-              path="/guide"
+              path="/guide/*"
               element={
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -39,16 +39,7 @@ function AppContent() {
                   <Guide />
                 </motion.div>
               }
-            >
-              {/* <Route path="account" element={<Account />} />
-              <Route path="compute" element={<Database />} />
-              <Route path="storage" element={<Storage />} />
-              <Route path="network" element={<Network />} />
-              <Route path="logging" element={<Logging />} />
-              <Route path="monitoring" element={<Monitoring />} />
-              <Route path="deployment" element={<Deployment />} />
-              <Route path="encryption" element={<Encryption />} /> */}
-            </Route>
+            ></Route>
             <Route
               path="/prowler"
               element={

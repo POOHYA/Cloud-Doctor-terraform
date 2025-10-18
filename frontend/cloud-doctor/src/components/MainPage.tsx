@@ -33,6 +33,14 @@ const sections = [
     bgColor: "bg-surface",
     route: "/checklist",
   },
+  {
+    id: "auditcheck",
+    title: "보안 점검",
+    subtitle: "자동 보안 점검",
+    description: "AWS 보안 항목들을 자동으로 점검하세요.",
+    bgColor: "bg-accent",
+    route: "/auditcheck",
+  },
 ];
 
 export default function MainPage() {

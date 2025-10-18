@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import { userApi } from "../../api/user";
 
 type ApiResponse = {
   id: number;
@@ -17,7 +18,7 @@ type ApiResponse = {
 export type GuideItemProps = {
   id: string;
   category: string;
-  severity: number;
+  importanceLevel: string;
   title: string;
   description: string;
   whatHappens: string;
@@ -27,19 +28,24 @@ export type GuideItemProps = {
   note: string;
 };
 
-const mapApiToGuideItem = (item: ApiResponse): GuideItemProps => {
-  const severityMap = { LOW: 1, MEDIUM: 2, HIGH: 3 };
+const mapApiToGuideItem = (item: any, serviceName?: string): GuideItemProps => {
   return {
-    id: item.id.toString(),
-    category: item.serviceList[0]?.displayName || "Unknown",
-    severity: severityMap[item.importanceLevel],
-    title: item.title,
-    description: item.note,
-    whatHappens: item.whatHappens,
-    checkSteps: item.checkStandard,
-    remediation: item.solutionText.split("\n").filter((s) => s.trim()),
-    sideEffect: item.sideEffects,
-    note: item.whyDangerous,
+    id: item.id?.toString() || "",
+    category:
+      serviceName ||
+      item.serviceList?.[0]?.displayName ||
+      item.serviceName ||
+      "Unknown",
+    importanceLevel: item.importanceLevel || "LOW",
+    title: item.title || "",
+    description: item.note || "",
+    whatHappens: item.whatHappens || "",
+    checkSteps: item.checkStandard || "",
+    remediation: (item.solutionText || "")
+      .split("\n")
+      .filter((s: string) => s.trim()),
+    sideEffect: item.sideEffects || "",
+    note: item.whyDangerous || "",
   };
 };
 
@@ -55,54 +61,49 @@ const Badge: React.FC<{ children: React.ReactNode; color?: string }> = ({
 );
 
 const GuideItem: React.FC<{ data: GuideItemProps }> = ({ data }) => {
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      // 간단한 피드백 (브라우저가 지원할 때)
-      // toast나 알림 컴포넌트가 있으면 그걸 호출하도록 바꿔도 좋음
-      alert("복사되었습니다.");
-    } catch {
-      alert("복사 실패 (클립보드 접근 권한 필요).");
-    }
-  };
+  const [showImageModal, setShowImageModal] = useState(false);
 
   return (
-    <article className="p-8 bg-slate-800/50 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-700 scroll-mt-24">
+    <article className="p-8 bg-slate-800/50 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-700">
       <header className="flex items-start justify-between gap-4 pb-6 border-b border-slate-700">
         <div>
           <h2 className="text-3xl font-bold text-white mb-3">{data.title}</h2>
           <div className="flex items-center gap-3">
-            <Badge color="bg-cyan-600">{data.category}</Badge>
-            <div className="flex items-center gap-1 bg-slate-700/50 px-3 py-1.5 rounded-full shadow-sm">
-              <span className="text-xs font-semibold text-white mr-1">
-                중요도
-              </span>
-              {Array.from({ length: 3 }).map((_, i) => (
-                <span key={i} className="text-lg">
-                  {i < (data.severity as number) ? "🔴" : "⚪"}
-                </span>
-              ))}
-            </div>
+            <Badge
+              color={
+                data.importanceLevel === "긴급"
+                  ? "bg-red-500"
+                  : data.importanceLevel === "확인요망"
+                  ? "bg-orange-500"
+                  : "bg-yellow-500"
+              }
+            >
+              {data.importanceLevel === "긴급"
+                ? "긴급"
+                : data.importanceLevel === "확인요망"
+                ? "중요"
+                : "확인요망"}
+            </Badge>
           </div>
         </div>
 
         <button
-          onClick={() => copyToClipboard(data.checkSteps)}
+          onClick={() => setShowImageModal(true)}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-medium shadow-lg hover:shadow-xl transition-all"
           title="캡쳐가이드"
         >
-          📋 캡쳐가이드
+          🌌 캡쳐가이드
         </button>
       </header>
 
       <section className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
           <div className="bg-slate-700/50 p-5 rounded-2xl shadow-md border border-slate-600">
-            <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
-              📝 항목 상세 내용
+            <h3 className="text-lg font-bold text-violet-400 mb-3 flex items-center gap-2">
+              📌 왜 위험한가
             </h3>
             <p className="text-white leading-relaxed whitespace-pre-line">
-              {data.description}
+              {data.note}
             </p>
           </div>
 
@@ -132,10 +133,7 @@ const GuideItem: React.FC<{ data: GuideItemProps }> = ({ data }) => {
             </h4>
             <ul className="space-y-2 text-slate-300">
               {data.remediation.map((r, idx) => (
-                <li key={idx} className="flex items-start gap-2">
-                  <span className="text-emerald-400 mt-0.5">✓</span>
-                  <span>{r}</span>
-                </li>
+                <li key={idx}>{r}</li>
               ))}
             </ul>
           </div>
@@ -146,17 +144,47 @@ const GuideItem: React.FC<{ data: GuideItemProps }> = ({ data }) => {
             </h4>
             <p className="text-slate-300">{data.sideEffect}</p>
           </div>
-
-          {data.note && (
-            <div className="p-5 bg-gradient-to-br from-violet-900/20 to-purple-900/20 rounded-2xl shadow-md border border-violet-600/30">
-              <h4 className="text-base font-bold text-violet-400 mb-3 flex items-center gap-2">
-                📌 왜 위험한가
-              </h4>
-              <p className="text-slate-300">{data.note}</p>
-            </div>
-          )}
         </aside>
       </section>
+
+      {showImageModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black"
+          onClick={() => setShowImageModal(false)}
+        >
+          <button
+            onClick={() => setShowImageModal(false)}
+            className="absolute top-4 right-4 z-10 bg-white/10 hover:bg-white/20 text-white rounded-full p-3 backdrop-blur-sm transition-all"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+          <div
+            className="w-full h-full flex items-center justify-center p-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={`/img/guide/${data.id}.png`}
+              alt="캡쳐 가이드"
+              className="max-w-full max-h-full object-contain"
+              onError={(e) => {
+                e.currentTarget.src = "/img/placeholder.png";
+              }}
+            />
+          </div>
+        </div>
+      )}
     </article>
   );
 };
@@ -170,17 +198,46 @@ export default function GuideDetail() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch("https://back.takustory.site/api/guidelines");
-        const data: ApiResponse[] = await res.json();
-        const mapped = data.map(mapApiToGuideItem);
-        const filtered = service
-          ? mapped.filter(
-              (item) => item.category.toUpperCase() === service.toUpperCase()
-            )
-          : mapped;
-        setArticles(filtered);
+        if (!service) {
+          setArticles([]);
+          setLoading(false);
+          return;
+        }
+
+        const servicesData = await userApi.getServicesByProvider(1);
+        console.log("Services:", servicesData);
+        console.log("Looking for service:", service);
+
+        const targetService = servicesData.find((s: any) => s.name === service);
+        console.log("Target service:", targetService);
+
+        if (!targetService) {
+          console.log("Service not found");
+          setArticles([]);
+          setLoading(false);
+          return;
+        }
+
+        const guidelines = await userApi.getGuidelinesByService(
+          targetService.id
+        );
+        console.log("Guidelines:", guidelines);
+
+        if (!Array.isArray(guidelines) || guidelines.length === 0) {
+          console.log("No guidelines found");
+          setArticles([]);
+          setLoading(false);
+          return;
+        }
+
+        const mapped = guidelines.map((g: any) =>
+          mapApiToGuideItem(g, targetService.displayName)
+        );
+        console.log("Mapped articles:", mapped);
+        setArticles(mapped);
       } catch (error) {
         console.error("데이터 불러오기 실패:", error);
+        setArticles([]);
       } finally {
         setLoading(false);
       }
@@ -195,7 +252,12 @@ export default function GuideDetail() {
 
   const scrollToArticle = (index: number) => {
     const element = document.getElementById(`article-${index}`);
-    element?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (element) {
+      const yOffset = -100;
+      const y =
+        element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: "smooth" });
+    }
   };
 
   if (loading) {

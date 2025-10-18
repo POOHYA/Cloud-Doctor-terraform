@@ -1,7 +1,6 @@
 import axios from "axios";
 
-const AUDIT_API_URL =
-  process.env.REACT_APP_AUDIT_API_URL || "http://localhost:8000";
+const AUDIT_API_URL = process.env.REACT_APP_AUDIT_API_URL || "https://localhost:8000";
 
 export interface AuditRequest {
   account_id: string;
