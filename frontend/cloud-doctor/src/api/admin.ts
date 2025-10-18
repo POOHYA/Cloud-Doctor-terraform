@@ -228,11 +228,6 @@ export const adminApi = {
     await axios.post("/admin/guidelines", guidelineData);
   },
 
-  getGuideline: async (id: number): Promise<any> => {
-    const { data } = await axios.get(`/admin/guidelines/${id}`);
-    return data;
-  },
-
   updateGuideline: async (
     id: number,
     guidelineData: {
