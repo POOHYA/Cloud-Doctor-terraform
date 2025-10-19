@@ -10,6 +10,13 @@ class EC2IMDSv2Check(BaseCheck):
         try:
             instances = ec2.describe_instances()
             
+            if not instances['Reservations']:
+                results.append(self.get_result(
+                    'PASS', 'N/A',
+                    "EC2 인스턴스가 존재하지 않습니다."
+                ))
+                return {'results': results, 'raw': raw, 'guideline_id': 1}
+            
             for reservation in instances['Reservations']:
                 for instance in reservation['Instances']:
                     instance_id = instance['InstanceId']
@@ -36,7 +43,13 @@ class EC2IMDSv2Check(BaseCheck):
                     else:
                         results.append(self.get_result(
                             'PASS', instance_id,
-                            f"인스턴스 {instance_id}는 IMDSv2가 필수로 설정되어 있습니다."
+                            f"인스턴스 {instance_id}는 IMDSv2가 필수로 설정되어 있습니다.",
+                            {
+                                'http_tokens': http_tokens,
+                                'http_put_response_hop_limit': metadata_options.get('HttpPutResponseHopLimit'),
+                                'http_endpoint': metadata_options.get('HttpEndpoint'),
+                                'metadata_options_raw': metadata_options
+                            }
                         ))
         except Exception as e:
             results.append(self.get_result('ERROR', 'N/A', str(e)))
@@ -51,6 +64,13 @@ class EC2PublicIPCheck(BaseCheck):
         
         try:
             instances = ec2.describe_instances()
+            
+            if not instances['Reservations']:
+                results.append(self.get_result(
+                    'PASS', 'N/A',
+                    "EC2 인스턴스가 존재하지 않습니다."
+                ))
+                return {'results': results, 'raw': raw, 'guideline_id': 2}
             
             for reservation in instances['Reservations']:
                 for instance in reservation['Instances']:
