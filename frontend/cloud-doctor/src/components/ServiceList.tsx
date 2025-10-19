@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { adminApi } from '../api/admin';
+import { useState, useEffect } from "react";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
+import { adminApi } from "../api/admin";
 
 interface Service {
   id: number;
@@ -15,8 +15,8 @@ export default function ServiceList() {
   const navigate = useNavigate();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  const providerName = location.state?.providerName || 'Unknown';
+
+  const providerName = location.state?.providerName || "Unknown";
 
   useEffect(() => {
     if (providerId) {
@@ -29,7 +29,7 @@ export default function ServiceList() {
       const data = await adminApi.getServicesByProvider(id);
       setServices(data);
     } catch (error) {
-      console.error('서비스 로드 실패:', error);
+      console.error("서비스 로드 실패:", error);
     } finally {
       setLoading(false);
     }
@@ -41,8 +41,8 @@ export default function ServiceList() {
         providerId: parseInt(providerId!),
         providerName,
         serviceId,
-        serviceName
-      }
+        serviceName,
+      },
     });
   };
 
@@ -62,7 +62,7 @@ export default function ServiceList() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => navigate('/guide')}
+                onClick={() => navigate("/guide")}
                 className="text-gray-600 hover:text-gray-900"
               >
                 ← 뒤로가기
@@ -72,7 +72,7 @@ export default function ServiceList() {
               </h1>
             </div>
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate("/")}
               className="text-gray-600 hover:text-gray-900"
             >
               홈으로
@@ -104,18 +104,18 @@ export default function ServiceList() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {services.map(service => (
+            {services.map((service) => (
               <button
                 key={service.id}
-                onClick={() => handleServiceClick(service.id, service.displayName)}
+                onClick={() =>
+                  handleServiceClick(service.id, service.displayName)
+                }
                 className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-blue-500 group text-left"
               >
                 <div className="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-600">
                   {service.displayName}
                 </div>
-                <div className="text-sm text-gray-600 mb-4">
-                  {service.name}
-                </div>
+                <div className="text-sm text-gray-600 mb-4">{service.name}</div>
                 <div className="text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity text-sm">
                   가이드라인 보기 →
                 </div>
