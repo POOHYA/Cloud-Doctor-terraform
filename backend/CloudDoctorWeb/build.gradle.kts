@@ -40,8 +40,6 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-api:0.12.3")                               // JWT API
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.3")                                 // JWT 구현체
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.3")                              // JWT Jackson
-    implementation("software.amazon.awssdk:s3:2.21.29")                             // AWS S3 SDK
-    implementation("software.amazon.awssdk:url-connection-client:2.21.29")           // AWS URL Connection Client
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("io.micrometer:micrometer-registry-prometheus")
     runtimeOnly("org.postgresql:postgresql")

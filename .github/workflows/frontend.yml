@@ -1,7 +1,6 @@
 name: Deploy Frontend to EC2
 
 on:
-  workflow_dispatch:  # 수동 트리거
   pull_request:
     branches:
       - develop  # develop 브랜치 pull_request 시 자동 배포
@@ -23,12 +22,10 @@ jobs:
 
       # 3️⃣ 패키지 설치
       - name: Install dependencies
-        working-directory: frontend/cloud-doctor
         run: npm ci
 
       # 4️⃣ 빌드
       - name: Build project
-        working-directory: frontend/cloud-doctor
         run: npm run build
 
       # 5️⃣ EC2로 배포 (빌드 결과만 복사)
@@ -39,9 +36,8 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
-          source: "frontend/cloud-doctor/build/*"
+          source: "build/*"
           target: "/var/www/html/"
-          strip_components: 3
 
       # 6️⃣ Nginx 리로드 (정적파일 반영)
       - name: Reload Nginx on EC2

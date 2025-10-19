@@ -19,7 +19,6 @@ export const GuidelineDetailModal: React.FC<Props> = ({
   const [links, setLinks] = useState<{title: string, url: string}[]>([]);
   const [services, setServices] = useState<any[]>([]);
   const [selectedServiceId, setSelectedServiceId] = useState<number | null>(null);
-  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (guideline) {
@@ -65,39 +64,6 @@ export const GuidelineDetailModal: React.FC<Props> = ({
 
   const removeLink = (index: number) => {
     setLinks(links.filter((_, i) => i !== index));
-  };
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || !guideline) return;
-
-    setUploading(true);
-    try {
-      const uploadPromises = Array.from(files).map(async (file) => {
-        const formData = new FormData();
-        formData.append('image', file);
-        
-        const response = await adminApi.uploadGuidelineImage(guideline.id, formData);
-        return response.imageUrl;
-      });
-
-      const imageUrls = await Promise.all(uploadPromises);
-      
-      setFormData(prev => ({
-        ...prev,
-        content: {
-          ...prev.content,
-          checkImages: [...(prev.content?.checkImages || []), ...imageUrls]
-        }
-      }));
-      
-      alert('이미지 업로드 성공!');
-    } catch (error) {
-      console.error('이미지 업로드 실패:', error);
-      alert('이미지 업로드에 실패했습니다.');
-    } finally {
-      setUploading(false);
-    }
   };
 
   if (!isOpen || !guideline) return null;
@@ -239,31 +205,6 @@ export const GuidelineDetailModal: React.FC<Props> = ({
               onChange={(e) => setFormData({...formData, note1: e.target.value})}
               className="w-full border rounded px-3 py-2 h-24"
             />
-          </div>
-
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <label className="block text-sm font-medium">캐처 가이드 이미지</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="text-sm"
-                multiple
-              />
-            </div>
-            {formData.content?.checkImages && formData.content.checkImages.length > 0 && (
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                {formData.content.checkImages.map((imageUrl, index) => (
-                  <img
-                    key={index}
-                    src={imageUrl}
-                    alt={`가이드 ${index + 1}`}
-                    className="w-full h-48 object-cover rounded border"
-                  />
-                ))}
-              </div>
-            )}
           </div>
 
           <div>

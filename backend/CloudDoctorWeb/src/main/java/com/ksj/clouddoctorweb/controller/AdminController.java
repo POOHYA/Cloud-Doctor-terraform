@@ -23,9 +23,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import org.springframework.web.multipart.MultipartFile;
-import com.ksj.clouddoctorweb.service.S3Service;
 
 /**
  * 관리자 전용 컨트롤러
@@ -45,8 +42,6 @@ public class AdminController {
     private final GuidelineRepository guidelineRepository;
     private final GuidelineLinkRepository guidelineLinkRepository;
     private final ChecklistRepository checklistRepository;
-    private final Optional<S3Service> s3Service;
-    private final GuidelineSolutionImageRepository guidelineSolutionImageRepository;
     
     /**
      * 서비스 리스트 생성
@@ -73,6 +68,9 @@ public class AdminController {
         CloudProvider provider = cloudProviderRepository.findById(request.getCloudProviderId())
             .orElseThrow(() -> new RuntimeException("클라우드 제공업체를 찾을 수 없습니다: " + request.getCloudProviderId()));
         
+        User admin = userRepository.findByUsername(authentication.getName())
+            .orElseThrow(() -> new RuntimeException("관리자를 찾을 수 없습니다"));
+        
         // 중복 서비스 이름 체크
         if (serviceListRepository.existsByCloudProviderIdAndName(request.getCloudProviderId(), request.getName().trim())) {
             throw new RuntimeException("이미 존재하는 서비스 이름입니다: " + request.getName());
@@ -84,9 +82,10 @@ public class AdminController {
         serviceList.setDisplayName(displayName);
         serviceList.setServiceRealCaseCount(request.getServiceRealCaseCount() != null ? request.getServiceRealCaseCount() : 0);
         serviceList.setIsActive(request.getIsActive() != null ? request.getIsActive() : true);
+        serviceList.setCreatedBy(admin);
         
         ServiceList saved = serviceListRepository.save(serviceList);
-        log.info("서비스 생성 성공: {} - {}", provider.getName(), saved.getName());
+        log.info("서비스 생성 성공: {} - {} (관리자: {})", provider.getName(), saved.getName(), admin.getUsername());
         return ResponseEntity.ok(ServiceListResponse.from(saved));
     }
     
@@ -510,41 +509,5 @@ public class AdminController {
     public ResponseEntity<Void> deleteChecklist(@PathVariable Long id) {
         checklistRepository.deleteById(id);
         return ResponseEntity.ok().build();
-    }
-    
-    /**
-     * 가이드라인 이미지 업로드
-     */
-    @Operation(summary = "가이드라인 이미지 업로드", description = "ADMIN 전용: 가이드라인 캐처 이미지 S3 업로드")
-    @PostMapping("/guidelines/{id}/images")
-    public ResponseEntity<Map<String, String>> uploadGuidelineImage(
-            @PathVariable Long id,
-            @RequestParam("image") MultipartFile file,
-            Authentication authentication) {
-        try {
-            Guideline guideline = guidelineRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("가이드라인을 찾을 수 없습니다"));
-            
-            if (!s3Service.isPresent()) {
-                throw new RuntimeException("S3 서비스가 비활성화되어 있습니다");
-            }
-            String imageUrl = s3Service.get().uploadImage(file, "guidelines");
-            
-            GuidelineSolutionImage solutionImage = new GuidelineSolutionImage();
-            solutionImage.setGuideline(guideline);
-            solutionImage.setImageUrl(imageUrl);
-            solutionImage.setDisplayOrder(1); // 기본 순서
-            
-            guidelineSolutionImageRepository.save(solutionImage);
-            
-            Map<String, String> response = new HashMap<>();
-            response.put("imageUrl", imageUrl);
-            response.put("message", "이미지 업로드 성공");
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("이미지 업로드 실패: ", e);
-            throw new RuntimeException("이미지 업로드에 실패했습니다: " + e.getMessage());
-        }
     }
 }
