@@ -1,4 +1,4 @@
-from ..base_check import BaseCheck
+from .base_check import BaseCheck
 from typing import List, Dict
 
 class EC2IMDSv2Check(BaseCheck):
