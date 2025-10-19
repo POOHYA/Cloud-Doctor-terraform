@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { adminApi } from "../../api/admin";
+import ChecklistDetailModal from "./ChecklistDetailModal";
 
 interface ChecklistGeneratorProps {
   providerName: string;
@@ -19,6 +20,9 @@ export default function ChecklistGenerator({
   const [submitting, setSubmitting] = useState(false);
   const [checklists, setChecklists] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedChecklistId, setSelectedChecklistId] = useState<number | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
 
   useEffect(() => {
     loadServices();
@@ -55,7 +59,9 @@ export default function ChecklistGenerator({
   const loadChecklists = async () => {
     try {
       const data = await adminApi.getAdminChecklists();
-      setChecklists(data);
+      // ID 순으로 정렬 유지
+      const sortedData = data.sort((a: any, b: any) => a.id - b.id);
+      setChecklists(sortedData);
     } catch (error) {
       console.error("체크리스트 로드 실패:", error);
     } finally {
@@ -70,9 +76,11 @@ export default function ChecklistGenerator({
     setSubmitting(true);
     try {
       await adminApi.createChecklist({
+        cloudProviderId: providerId,
+        serviceListId: parseInt(selectedService),
         guidelineId: parseInt(guidelineId),
         title: title.trim(),
-        description: description.trim(),
+        isActive: true,
       });
 
       setGuidelineId("");
@@ -161,9 +169,43 @@ export default function ChecklistGenerator({
       </div>
 
       <div className="bg-surface rounded-lg shadow-md p-6 mt-6">
-        <h2 className="text-xl font-bold mb-4 text-primary-dark">
-          등록된 체크리스트
-        </h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-primary-dark">
+            등록된 체크리스트
+          </h2>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setFilterStatus('all')}
+              className={`px-3 py-1 rounded text-sm ${
+                filterStatus === 'all'
+                  ? 'bg-accent text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              전체
+            </button>
+            <button
+              onClick={() => setFilterStatus('active')}
+              className={`px-3 py-1 rounded text-sm ${
+                filterStatus === 'active'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              활성화
+            </button>
+            <button
+              onClick={() => setFilterStatus('inactive')}
+              className={`px-3 py-1 rounded text-sm ${
+                filterStatus === 'inactive'
+                  ? 'bg-red-500 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              비활성화
+            </button>
+          </div>
+        </div>
 
         {loading ? (
           <div className="text-center py-8 text-beige">로딩 중...</div>
@@ -173,18 +215,41 @@ export default function ChecklistGenerator({
           </div>
         ) : (
           <div className="space-y-3">
-            {checklists.map((checklist) => (
+            {checklists
+              .filter((checklist) => {
+                if (filterStatus === 'active') return checklist.isActive;
+                if (filterStatus === 'inactive') return !checklist.isActive;
+                return true;
+              })
+              .map((checklist) => (
               <div
                 key={checklist.id}
-                className="flex items-center justify-between p-4 bg-white rounded-md border"
+                className={`flex items-center justify-between p-4 rounded-md border ${
+                  checklist.isActive
+                    ? 'bg-white border-gray-200'
+                    : 'bg-gray-50 border-gray-300 opacity-75'
+                }`}
               >
-                <div className="flex-1">
-                  <div className="font-medium text-primary-dark">
-                    {checklist.title}
+                <div 
+                  className="flex-1 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                  onClick={() => {
+                    setSelectedChecklistId(checklist.id);
+                    setIsModalOpen(true);
+                  }}
+                >
+                  <div className="flex items-center">
+                    <div className="font-medium text-primary-dark">
+                      {checklist.title}
+                      {!checklist.isActive && (
+                        <span className="ml-2 px-2 py-1 text-xs bg-red-100 text-red-600 rounded">
+                          비활성
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  {checklist.guideline && (
+                  {checklist.guidelineTitle && (
                     <div className="text-sm text-gray-600 mt-1">
-                      가이드라인: {checklist.guideline.title}
+                      가이드라인: {checklist.guidelineTitle}
                     </div>
                   )}
                 </div>
@@ -217,6 +282,18 @@ export default function ChecklistGenerator({
           </div>
         )}
       </div>
+
+      {selectedChecklistId && (
+        <ChecklistDetailModal
+          checklistId={selectedChecklistId}
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedChecklistId(null);
+          }}
+          onUpdate={loadChecklists}
+        />
+      )}
     </div>
   );
 }

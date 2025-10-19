@@ -225,7 +225,7 @@ public class AdminController {
     @Operation(summary = "가이드라인 목록 조회", description = "ADMIN 전용: 모든 가이드라인 목록 조회")
     @GetMapping("/guidelines")
     public ResponseEntity<List<Map<String, Object>>> getAllGuidelines() {
-        List<Guideline> guidelines = guidelineRepository.findAll();
+        List<Guideline> guidelines = guidelineRepository.findAllByOrderByIdAsc();
         List<Map<String, Object>> responses = new ArrayList<>();
         
         for (Guideline guideline : guidelines) {
@@ -408,22 +408,45 @@ public class AdminController {
     @Operation(summary = "체크리스트 목록", description = "ADMIN 전용: 체크리스트 목록 조회")
     @GetMapping("/checklists")
     public ResponseEntity<List<ChecklistResponse>> getAllChecklists() {
-        List<Checklist> checklists = checklistRepository.findAllActiveOrderedByProviderServiceGuideline();
-        List<ChecklistResponse> responses = checklists.stream()
-            .map(ChecklistResponse::from)
-            .toList();
-        return ResponseEntity.ok(responses);
+        try {
+            log.info("체크리스트 목록 조회 요청");
+            List<Checklist> checklists = checklistRepository.findAllByOrderByIdAsc();
+            log.info("체크리스트 조회 결과: {} 개", checklists.size());
+            List<ChecklistResponse> responses = checklists.stream()
+                .map(ChecklistResponse::from)
+                .toList();
+            return ResponseEntity.ok(responses);
+        } catch (Exception e) {
+            log.error("체크리스트 조회 오류: ", e);
+            return ResponseEntity.ok(new ArrayList<>());
+        }
     }
     
+    /**
+     * 개별 체크리스트 조회
+     */
+    @Operation(summary = "체크리스트 조회", description = "ADMIN 전용: 개별 체크리스트 조회")
+    @GetMapping("/checklists/{id}")
+    public ResponseEntity<ChecklistResponse> getChecklist(@PathVariable Long id) {
+        Checklist checklist = checklistRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("체크리스트를 찾을 수 없습니다"));
+        return ResponseEntity.ok(ChecklistResponse.from(checklist));
+    }
+
     /**
      * 개별 체크리스트 수정
      */
     @Operation(summary = "체크리스트 수정", description = "ADMIN 전용: 개별 체크리스트 수정")
-    @GetMapping("/checklists/{id}")
-    public ResponseEntity<ChecklistResponse> updateChecklist(@PathVariable Long id) {
+    @PutMapping("/checklists/{id}")
+    public ResponseEntity<ChecklistResponse> updateChecklist(@PathVariable Long id, @RequestBody ChecklistRequest request) {
         Checklist checklist = checklistRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("체크리스트를 찾을 수 없습니다"));
-        return ResponseEntity.ok(ChecklistResponse.from(checklist));
+        
+        checklist.setTitle(request.getTitle());
+        checklist.setIsActive(request.getIsActive());
+        
+        Checklist updated = checklistRepository.save(checklist);
+        return ResponseEntity.ok(ChecklistResponse.from(updated));
     }
 
 

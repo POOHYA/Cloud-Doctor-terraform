@@ -2,6 +2,7 @@ package com.ksj.clouddoctorweb.controller;
 
 import com.ksj.clouddoctorweb.dto.ServiceListResponse;
 import com.ksj.clouddoctorweb.dto.ChecklistResponse;
+import com.ksj.clouddoctorweb.dto.GuidelineLinkRequest;
 import com.ksj.clouddoctorweb.entity.*;
 import com.ksj.clouddoctorweb.repository.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,6 +34,7 @@ public class ApiController {
     private final ChecklistRepository checklistRepository;
     private final UserChecklistResultRepository userChecklistResultRepository;
     private final UserRepository userRepository;
+    private final GuidelineLinkRepository guidelineLinkRepository;
     
     /**
      * 활성화된 클라우드 제공업체 목록 조회
@@ -66,9 +68,35 @@ public class ApiController {
      */
     @Operation(summary = "가이드라인 목록", description = "전체 보안 가이드라인 목록 조회")
     @GetMapping("/guidelines")
-    public List<Guideline> getGuidelines() {
+    public List<Map<String, Object>> getGuidelines() {
         log.info("가이드라인 목록 조회 요청");
-        return guidelineRepository.findAll();
+        List<Guideline> guidelines = guidelineRepository.findAllByOrderByIdAsc();
+        List<Map<String, Object>> responses = new ArrayList<>();
+        
+        for (Guideline guideline : guidelines) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("id", guideline.getId());
+            response.put("title", guideline.getTitle());
+            response.put("importanceLevel", guideline.getImportanceLevel());
+            response.put("whyDangerous", guideline.getWhyDangerous());
+            response.put("whatHappens", guideline.getWhatHappens());
+            response.put("checkStandard", guideline.getCheckStandard());
+            response.put("solutionText", guideline.getSolutionText());
+            response.put("sideEffects", guideline.getSideEffects());
+            response.put("note", guideline.getNote());
+            response.put("createdAt", guideline.getCreatedAt());
+            
+            // 링크 조회
+            List<GuidelineLink> links = guidelineLinkRepository.findByGuidelineId(guideline.getId());
+            List<GuidelineLinkRequest> linkDtos = links.stream()
+                .map(link -> new GuidelineLinkRequest(link.getTitle(), link.getUrl()))
+                .toList();
+            response.put("links", linkDtos);
+            
+            responses.add(response);
+        }
+        
+        return responses;
     }
     
     /**
@@ -78,9 +106,35 @@ public class ApiController {
      */
     @Operation(summary = "서비스별 가이드라인", description = "특정 서비스의 보안 가이드라인 목록")
     @GetMapping("/guidelines/service/{serviceId}")
-    public List<Guideline> getGuidelinesByService(@PathVariable Long serviceId) {
+    public List<Map<String, Object>> getGuidelinesByService(@PathVariable Long serviceId) {
         log.info("서비스 ID {} 의 가이드라인 조회 요청", serviceId);
-        return guidelineRepository.findByServiceListId(serviceId);
+        List<Guideline> guidelines = guidelineRepository.findByServiceListIdOrderByIdAsc(serviceId);
+        List<Map<String, Object>> responses = new ArrayList<>();
+        
+        for (Guideline guideline : guidelines) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("id", guideline.getId());
+            response.put("title", guideline.getTitle());
+            response.put("importanceLevel", guideline.getImportanceLevel());
+            response.put("whyDangerous", guideline.getWhyDangerous());
+            response.put("whatHappens", guideline.getWhatHappens());
+            response.put("checkStandard", guideline.getCheckStandard());
+            response.put("solutionText", guideline.getSolutionText());
+            response.put("sideEffects", guideline.getSideEffects());
+            response.put("note", guideline.getNote());
+            response.put("createdAt", guideline.getCreatedAt());
+            
+            // 링크 조회
+            List<GuidelineLink> links = guidelineLinkRepository.findByGuidelineId(guideline.getId());
+            List<GuidelineLinkRequest> linkDtos = links.stream()
+                .map(link -> new GuidelineLinkRequest(link.getTitle(), link.getUrl()))
+                .toList();
+            response.put("links", linkDtos);
+            
+            responses.add(response);
+        }
+        
+        return responses;
     }
     
     /**

@@ -28,7 +28,7 @@ module.exports = function(app) {
   
   // 백엔드 /admin API만 프록시 (구체적인 API 경로만)
   app.use(
-    ['/admin/services', '/admin/guidelines', '/admin/users'],
+    ['/admin/services', '/admin/guidelines', '/admin/users', '/admin/checklists'],
     createProxyMiddleware({
       target: 'http://localhost:9090',
       changeOrigin: true,

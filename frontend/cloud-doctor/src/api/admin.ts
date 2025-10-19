@@ -228,6 +228,26 @@ export const adminApi = {
     await axios.post("/admin/guidelines", guidelineData);
   },
 
+  getGuideline: async (id: number): Promise<any> => {
+    const { data } = await axios.get(`/admin/guidelines/${id}`);
+    return data;
+  },
+
+  getChecklist: async (id: number): Promise<any> => {
+    const { data } = await axios.get(`/admin/checklists/${id}`);
+    return data;
+  },
+
+  updateChecklist: async (
+    id: number,
+    checklistData: {
+      title: string;
+      isActive: boolean;
+    }
+  ): Promise<void> => {
+    await axios.put(`/admin/checklists/${id}`, checklistData);
+  },
+
   updateGuideline: async (
     id: number,
     guidelineData: {
