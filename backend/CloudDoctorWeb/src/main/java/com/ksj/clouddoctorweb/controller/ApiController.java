@@ -56,7 +56,7 @@ public class ApiController {
     @GetMapping("/services/provider/{providerId}")
     public List<ServiceListResponse> getServicesByProvider(@PathVariable Long providerId) {
         log.info("클라우드 제공업체 ID {} 의 서비스 조회 요청", providerId);
-        List<ServiceList> services = serviceListRepository.findByCloudProviderIdAndIsActiveTrue(providerId);
+        List<ServiceList> services = serviceListRepository.findByCloudProviderIdAndIsActiveTrueOrderByIdAsc(providerId);
         return services.stream()
             .map(ServiceListResponse::from)
             .toList();
@@ -77,6 +77,7 @@ public class ApiController {
             Map<String, Object> response = new HashMap<>();
             response.put("id", guideline.getId());
             response.put("title", guideline.getTitle());
+            response.put("serviceListId", guideline.getServiceList().getId());
             response.put("importanceLevel", guideline.getImportanceLevel());
             response.put("whyDangerous", guideline.getWhyDangerous());
             response.put("whatHappens", guideline.getWhatHappens());

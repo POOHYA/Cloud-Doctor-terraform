@@ -183,7 +183,7 @@ export const adminApi = {
   },
 
   getServicesByProvider: async (providerId: number): Promise<any[]> => {
-    const { data } = await axios.get(`/api/services/provider/${providerId}`);
+    const { data } = await axios.get(`/admin/services/provider/${providerId}`);
     return data;
   },
 

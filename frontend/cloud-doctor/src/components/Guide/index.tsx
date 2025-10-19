@@ -54,11 +54,11 @@ function Index() {
                     <img
                       className="w-24 h-24 rounded-lg object-cover"
                       alt=""
-                      src={`../img/aws-icon/${service.displayName}.svg`}
+                      src={`/img/aws-icon/${service.displayName || service.name}.svg`}
                     />
                     <div>
                       <h3 className="text-xl font-bold text-beige mb-2">
-                        {service.displayName}
+                        {service.displayName || service.name}
                       </h3>
                       <p className="text-sm text-slate-400">
                         총 {service.guidelineCount}개 항목

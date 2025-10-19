@@ -97,16 +97,28 @@ public class AdminController {
     public ResponseEntity<ServiceListResponse> updateService(@PathVariable Long id, 
                                                    @RequestBody ServiceListRequest request,
                                                    Authentication authentication) {
+        log.info("서비스 수정 요청: id={}, name={}, displayName={}", id, request.getName(), request.getDisplayName());
+        
         ServiceList serviceList = serviceListRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("서비스를 찾을 수 없습니다"));
         
-        serviceList.setName(request.getName());
-        serviceList.setDisplayName(request.getDisplayName());
-        serviceList.setServiceRealCaseCount(request.getServiceRealCaseCount());
-        serviceList.setIsActive(request.getIsActive());
+        // 필수 필드 검증
+        if (request.getName() == null || request.getName().trim().isEmpty()) {
+            throw new RuntimeException("서비스 이름이 필요합니다");
+        }
+        
+        // displayName이 없으면 name 사용
+        String displayName = (request.getDisplayName() == null || request.getDisplayName().trim().isEmpty()) 
+            ? request.getName().trim() 
+            : request.getDisplayName().trim();
+        
+        serviceList.setName(request.getName().trim());
+        serviceList.setDisplayName(displayName);
+        serviceList.setServiceRealCaseCount(request.getServiceRealCaseCount() != null ? request.getServiceRealCaseCount() : serviceList.getServiceRealCaseCount());
+        serviceList.setIsActive(request.getIsActive() != null ? request.getIsActive() : serviceList.getIsActive());
         
         ServiceList updated = serviceListRepository.save(serviceList);
-        log.info("서비스 수정: {}", updated.getName());
+        log.info("서비스 수정 성공: {}", updated.getName());
         return ResponseEntity.ok(ServiceListResponse.from(updated));
     }
     
@@ -128,7 +140,20 @@ public class AdminController {
     @Operation(summary = "서비스 목록 조회", description = "ADMIN 전용: 모든 서비스 목록 조회")
     @GetMapping("/services")
     public ResponseEntity<List<ServiceListResponse>> getAllServices() {
-        List<ServiceList> services = serviceListRepository.findAll();
+        List<ServiceList> services = serviceListRepository.findAllByOrderByIdAsc();
+        List<ServiceListResponse> responses = services.stream()
+            .map(ServiceListResponse::from)
+            .toList();
+        return ResponseEntity.ok(responses);
+    }
+    
+    /**
+     * 특정 제공업체의 서비스 리스트 조회 (관리자용)
+     */
+    @Operation(summary = "제공업체별 서비스 목록", description = "ADMIN 전용: 특정 제공업체의 서비스 목록 조회")
+    @GetMapping("/services/provider/{providerId}")
+    public ResponseEntity<List<ServiceListResponse>> getServicesByProvider(@PathVariable Long providerId) {
+        List<ServiceList> services = serviceListRepository.findByCloudProviderIdOrderByIdAsc(providerId);
         List<ServiceListResponse> responses = services.stream()
             .map(ServiceListResponse::from)
             .toList();
@@ -293,6 +318,9 @@ public class AdminController {
         ServiceList serviceList = serviceListRepository.findById(request.getServiceListId())
             .orElseThrow(() -> new RuntimeException("서비스를 찾을 수 없습니다"));
         
+        // 서비스 변경 여부 확인
+        boolean serviceChanged = !guideline.getServiceList().getId().equals(request.getServiceListId());
+        
         guideline.setTitle(request.getTitle());
         guideline.setCloudProvider(provider);
         guideline.setServiceList(serviceList);
@@ -305,6 +333,16 @@ public class AdminController {
         guideline.setNote(request.getNote());
         
         Guideline updated = guidelineRepository.save(guideline);
+        
+        // 가이드라인의 서비스가 변경된 경우 관련 체크리스트도 업데이트
+        if (serviceChanged) {
+            List<Checklist> relatedChecklists = checklistRepository.findByGuidelineId(id);
+            for (Checklist checklist : relatedChecklists) {
+                checklist.setServiceList(serviceList);
+                checklistRepository.save(checklist);
+            }
+            log.info("가이드라인 서비스 변경으로 인한 체크리스트 업데이트: {} 개", relatedChecklists.size());
+        }
         
         // 기존 링크 삭제 후 새 링크 추가
         guidelineLinkRepository.deleteByGuidelineId(id);
@@ -444,6 +482,19 @@ public class AdminController {
         
         checklist.setTitle(request.getTitle());
         checklist.setIsActive(request.getIsActive());
+        
+        // 서비스와 가이드라인 업데이트
+        if (request.getServiceListId() != null) {
+            ServiceList serviceList = serviceListRepository.findById(request.getServiceListId())
+                .orElseThrow(() -> new RuntimeException("서비스를 찾을 수 없습니다"));
+            checklist.setServiceList(serviceList);
+        }
+        
+        if (request.getGuidelineId() != null) {
+            Guideline guideline = guidelineRepository.findById(request.getGuidelineId())
+                .orElseThrow(() -> new RuntimeException("가이드라인을 찾을 수 없습니다"));
+            checklist.setGuideline(guideline);
+        }
         
         Checklist updated = checklistRepository.save(checklist);
         return ResponseEntity.ok(ChecklistResponse.from(updated));

@@ -19,6 +19,10 @@ export default function ChecklistDetailModal({
   const [isActive, setIsActive] = useState(true);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [services, setServices] = useState<any[]>([]);
+  const [guidelines, setGuidelines] = useState<any[]>([]);
+  const [selectedServiceId, setSelectedServiceId] = useState<number | null>(null);
+  const [selectedGuidelineId, setSelectedGuidelineId] = useState<number | null>(null);
 
   useEffect(() => {
     if (isOpen && checklistId) {
@@ -33,6 +37,18 @@ export default function ChecklistDetailModal({
       setChecklist(data);
       setTitle(data.title);
       setIsActive(data.isActive);
+      setSelectedServiceId(data.serviceListId);
+      setSelectedGuidelineId(data.guidelineId);
+      
+      // 서비스 목록 로드
+      const servicesData = await adminApi.getServicesByProvider(data.cloudProviderId);
+      setServices(servicesData);
+      
+      // 가이드라인 목록 로드
+      if (data.serviceListId) {
+        const guidelinesData = await adminApi.getGuidelinesByService(data.serviceListId);
+        setGuidelines(guidelinesData);
+      }
     } catch (error) {
       console.error("체크리스트 로드 실패:", error);
     } finally {
@@ -40,12 +56,37 @@ export default function ChecklistDetailModal({
     }
   };
 
+  const loadGuidelines = async (serviceId: number) => {
+    try {
+      const data = await adminApi.getGuidelinesByService(serviceId);
+      setGuidelines(data);
+    } catch (error) {
+      console.error("가이드라인 로드 실패:", error);
+    }
+  };
+
+  const handleServiceChange = (serviceId: number) => {
+    setSelectedServiceId(serviceId);
+    setSelectedGuidelineId(null);
+    setGuidelines([]);
+    if (serviceId) {
+      loadGuidelines(serviceId);
+    }
+  };
+
   const handleSave = async () => {
+    if (!selectedServiceId || !selectedGuidelineId) {
+      alert('서비스와 가이드라인을 선택해주세요.');
+      return;
+    }
+    
     setSaving(true);
     try {
       await adminApi.updateChecklist(checklistId, {
         title: title.trim(),
         isActive,
+        serviceListId: selectedServiceId,
+        guidelineId: selectedGuidelineId,
       });
       onUpdate();
       onClose();
@@ -99,23 +140,38 @@ export default function ChecklistDetailModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">서비스</label>
-              <input
-                type="text"
-                value={checklist.serviceListName || ""}
-                className="w-full p-3 border rounded-md bg-gray-100"
-                disabled
-              />
+              <label className="block text-sm font-medium mb-2">서비스 *</label>
+              <select
+                value={selectedServiceId || ''}
+                onChange={(e) => handleServiceChange(Number(e.target.value))}
+                className="w-full p-3 border rounded-md"
+                required
+              >
+                <option value="">서비스를 선택하세요</option>
+                {services.map((service) => (
+                  <option key={service.id} value={service.id}>
+                    {service.displayName || service.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">가이드라인</label>
-              <input
-                type="text"
-                value={checklist.guidelineTitle || ""}
-                className="w-full p-3 border rounded-md bg-gray-100"
-                disabled
-              />
+              <label className="block text-sm font-medium mb-2">가이드라인 *</label>
+              <select
+                value={selectedGuidelineId || ''}
+                onChange={(e) => setSelectedGuidelineId(Number(e.target.value))}
+                className="w-full p-3 border rounded-md"
+                required
+                disabled={!selectedServiceId}
+              >
+                <option value="">가이드라인을 선택하세요</option>
+                {guidelines.map((guideline) => (
+                  <option key={guideline.id} value={guideline.id}>
+                    {guideline.title}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
@@ -139,7 +195,7 @@ export default function ChecklistDetailModal({
               </button>
               <button
                 onClick={handleSave}
-                disabled={saving || !title.trim()}
+                disabled={saving || !title.trim() || !selectedServiceId || !selectedGuidelineId}
                 className="px-4 py-2 bg-accent text-white rounded-md hover:bg-accent/80 disabled:opacity-50"
               >
                 {saving ? "저장 중..." : "저장"}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { GuidelineDetail } from '../../types/guideline';
+import { adminApi } from '../../api/admin';
 
 interface Props {
   guideline: GuidelineDetail | null;
@@ -16,22 +17,37 @@ export const GuidelineDetailModal: React.FC<Props> = ({
 }) => {
   const [formData, setFormData] = useState<Partial<GuidelineDetail>>({});
   const [links, setLinks] = useState<{title: string, url: string}[]>([]);
+  const [services, setServices] = useState<any[]>([]);
+  const [selectedServiceId, setSelectedServiceId] = useState<number | null>(null);
 
   useEffect(() => {
     if (guideline) {
       setFormData(guideline);
+      setSelectedServiceId(Number(guideline.serviceId) || null);
       // uncheckedCases가 문자열 배열이면 객체 배열로 변환
       const convertedLinks = (guideline.uncheckedCases || []).map(item => 
         typeof item === 'string' ? {title: '', url: item} : item
       );
       setLinks(convertedLinks);
+      loadServices();
     }
   }, [guideline]);
 
+  const loadServices = async () => {
+    try {
+      // 가이드라인에서 cloudProviderId를 추출해야 함
+      const cloudProviderId = 1; // 임시로 AWS로 설정, 실제로는 guideline에서 가져와야 함
+      const data = await adminApi.getServicesByProvider(cloudProviderId);
+      setServices(data);
+    } catch (error) {
+      console.error('서비스 로드 실패:', error);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (guideline) {
-      onUpdate(guideline.id, { ...formData, links });
+    if (guideline && selectedServiceId) {
+      onUpdate(guideline.id, { ...formData, serviceId: selectedServiceId.toString(), links });
     }
   };
 
@@ -63,6 +79,22 @@ export const GuidelineDetailModal: React.FC<Props> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">서비스</label>
+            <select
+              value={selectedServiceId || ''}
+              onChange={(e) => setSelectedServiceId(Number(e.target.value))}
+              className="w-full border rounded px-3 py-2"
+            >
+              <option value="">서비스를 선택하세요</option>
+              {services.map((service) => (
+                <option key={service.id} value={service.id}>
+                  {service.displayName || service.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label className="block text-sm font-medium mb-1">제목</label>
             <input
@@ -148,13 +180,13 @@ export const GuidelineDetailModal: React.FC<Props> = ({
 
           <div>
             <div className="flex justify-between items-center mb-2">
-              <label className="block text-sm font-medium">미점검 사례</label>
+              <label className="block text-sm font-medium">참고 링크</label>
               <button
                 type="button"
                 onClick={addLink}
                 className="bg-blue-500 text-white px-3 py-1 rounded text-sm"
               >
-                사례 추가
+                링크 추가
               </button>
             </div>
             {links.map((link, index) => (
