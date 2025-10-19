@@ -45,7 +45,6 @@ CREATE TABLE service_lists (
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by BIGINT NOT NULL REFERENCES users(id),
     UNIQUE(cloud_provider_id, name)
 );
 
@@ -129,45 +128,40 @@ INSERT INTO cloud_providers (name, display_name) VALUES
 ('GCP', 'Google Cloud Platform'),
 ('Azure', 'Microsoft Azure');
 
--- Insert admin users
-INSERT INTO users (username, password, email, full_name, role, is_active) VALUES
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lbdxIcyuv4YSjbLye', 'admin1@example.com', '관리자1', 'ADMIN', true);
-
 -- Insert AWS services
-INSERT INTO service_lists (cloud_provider_id, name, display_name, service_real_case_count, is_active, created_by) VALUES
-(1, 'ec2', 'Amazon EC2', 41, true, 1),
-(1, 's3', 'Amazon S3', 20, true, 1),
-(1, 'iam', 'AWS IAM', 152, true, 1),
-(1, 'vpc', 'Amazon VPC', 5, true, 1),
-(1, 'lambda', 'AWS Lambda', 5, true, 1),
-(1, 'rds', 'Amazon RDS', 6, true, 1),
-(1, 'cloudtrail', 'AWS CloudTrail', 5, true, 1),
-(1, 'eks', 'Amazon EKS', 7, true, 1),
-(1, 'kms', 'AWS KMS', 3, true, 1),
-(1, 'sns', 'Amazon SNS', 3, true, 1),
-(1, 'sqs', 'Amazon SQS', 2, true, 1),
-(1, 'route53', 'Amazon Route 53', 7, true, 1),
-(1, 'organizations', 'AWS Organizations', 4, true, 1),
-(1, 'ecr', 'Amazon ECR', 3, true, 1),
-(1, 'ssm', 'AWS Systems Manager', 4, true, 1),
-(1, 'guardduty', 'Amazon GuardDuty', 3, true, 1),
-(1, 'cognito', 'Amazon Cognito', 9, true, 1),
-(1, 'cloudformation', 'AWS CloudFormation', 4, true, 1),
-(1, 'opensearch', 'AWS OpenSearch Service', 2, true, 1),
-(1, 'elasti beanstalk', 'AWS Elastic Beanstalk', 3, true, 1),
-(1, 'redshift', 'Amazon Redshift', 2, true, 1),
-(1, 'glue', 'AWS Glue', 3, true, 1),
-(1, 'service catalog', 'AWS Service Catalog', 3, true, 1),
-(1, 'documentdb', 'Amazon DocumentDB', 2, true, 1),
-(1, 'bedrock', 'Amazon Bedrock', 4, true, 1),
-(1, 'ses', 'Amazon SES', 2, true, 1),
-(1, 'appstream', 'Amazon AppStream 2.0', 2, true, 1);
+INSERT INTO service_lists (cloud_provider_id, name, display_name, service_real_case_count, is_active) VALUES
+(1, 'ec2', 'Amazon EC2', 41, true),
+(1, 's3', 'Amazon S3', 20, true),
+(1, 'iam', 'AWS IAM', 152, true),
+(1, 'vpc', 'Amazon VPC', 5, true),
+(1, 'lambda', 'AWS Lambda', 5, true),
+(1, 'rds', 'Amazon RDS', 6, true),
+(1, 'cloudtrail', 'AWS CloudTrail', 5, true),
+(1, 'eks', 'Amazon EKS', 7, true),
+(1, 'kms', 'AWS KMS', 3, true),
+(1, 'sns', 'Amazon SNS', 3, true),
+(1, 'sqs', 'Amazon SQS', 2, true),
+(1, 'route53', 'Amazon Route 53', 7, true),
+(1, 'organizations', 'AWS Organizations', 4, true),
+(1, 'ecr', 'Amazon ECR', 3, true),
+(1, 'ssm', 'AWS Systems Manager', 4, true),
+(1, 'guardduty', 'Amazon GuardDuty', 3, true),
+(1, 'cognito', 'Amazon Cognito', 9, true),
+(1, 'cloudformation', 'AWS CloudFormation', 4, true),
+(1, 'opensearch', 'AWS OpenSearch Service', 2, true),
+(1, 'elasticbeanstalk', 'AWS Elastic Beanstalk', 3, true),
+(1, 'redshift', 'Amazon Redshift', 2, true),
+(1, 'glue', 'AWS Glue', 3, true),
+(1, 'servicecatalog', 'AWS Service Catalog', 3, true),
+(1, 'documentdb', 'Amazon DocumentDB', 2, true),
+(1, 'bedrock', 'Amazon Bedrock', 4, true),
+(1, 'ses', 'Amazon SES', 2, true),
+(1, 'appstream', 'Amazon AppStream 2.0', 2, true);
 
 -- Create indexes
 CREATE INDEX idx_refresh_tokens_user ON refresh_tokens(user_id);
 CREATE INDEX idx_refresh_tokens_expires ON refresh_tokens(expires_at);
 CREATE INDEX idx_service_lists_cloud_provider ON service_lists(cloud_provider_id);
-CREATE INDEX idx_service_lists_created_by ON service_lists(created_by);
 CREATE INDEX idx_guidelines_cloud_provider ON guidelines(cloud_provider_id);
 CREATE INDEX idx_guidelines_service_list ON guidelines(service_list_id);
 CREATE INDEX idx_guidelines_created_by ON guidelines(created_by);

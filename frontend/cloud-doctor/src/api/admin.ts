@@ -266,4 +266,13 @@ export const adminApi = {
   ): Promise<void> => {
     await axios.put(`/admin/guidelines/${id}`, guidelineData);
   },
+
+  uploadGuidelineImage: async (guidelineId: string, formData: FormData): Promise<{imageUrl: string}> => {
+    const { data } = await axios.post(`/admin/guidelines/${guidelineId}/images`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return data;
+  },
 };

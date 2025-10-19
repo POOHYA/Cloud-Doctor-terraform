@@ -41,9 +41,7 @@ public class ServiceList {
     @Column(name = "is_active")
     private Boolean isActive = true;
     
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by", nullable = false)
-    private User createdBy;
+
     
     @CreatedDate
     @Column(name = "created_at", updatable = false)
