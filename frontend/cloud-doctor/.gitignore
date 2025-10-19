@@ -31,3 +31,6 @@ yarn-error.log*
 *.key
 !frontend/cloud-doctor/localhost.pem
 !frontend/cloud-doctor/localhost-key.pem
+
+# mkcert.exe
+mkcert.exe

@@ -40,3 +40,7 @@ build/
 ._*
 .Spotlight-V100
 .Trashes
+
+
+# mkcert.exe
+mkcert.exe

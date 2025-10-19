@@ -24,6 +24,8 @@ export interface AuditResponse {
   started_at: string;
   completed_at?: string;
   results?: CheckResult[];
+  raw?: Record<string, any[]>;
+  guideline_ids?: Record<string, number>;
   summary?: {
     total: number;
     pass: number;
@@ -68,4 +70,6 @@ export const AVAILABLE_CHECKS = [
   { id: "s3_encryption", name: "S3 암호화 설정", category: "S3" },
   { id: "ec2_imdsv2", name: "EC2 IMDSv2 강제", category: "EC2" },
   { id: "ec2_public_ip", name: "EC2 퍼블릭 IP", category: "EC2" },
+  { id: "ec2_ami_private", name: "EC2 AMI 프라이빗 설정", category: "EC2" },
+  { id: "ebs_snapshot_private", name: "EBS 스냅샷 프라이빗 설정", category: "EC2" },
 ];

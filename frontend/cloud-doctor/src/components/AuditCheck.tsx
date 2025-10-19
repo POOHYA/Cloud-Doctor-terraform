@@ -192,11 +192,36 @@ export default function AuditCheck() {
                           {item.check_id}
                         </div>
                         <div className="text-sm text-beige mt-1">
-                          {item.message}
+                          {item.message.split('|').map((part, i) => {
+                            const urlMatch = part.match(/(https?:\/\/[^\s]+|www\.[^\s]+)/);
+                            if (urlMatch) {
+                              const url = urlMatch[0].startsWith('http') ? urlMatch[0] : `https://${urlMatch[0]}`;
+                              return (
+                                <div key={i}>
+                                  {part.substring(0, urlMatch.index)}
+                                  <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline hover:text-blue-300">
+                                    {urlMatch[0]}
+                                  </a>
+                                  {part.substring(urlMatch.index + urlMatch[0].length)}
+                                </div>
+                              );
+                            }
+                            return <div key={i}>{part}</div>;
+                          })}
                         </div>
                         <div className="text-xs text-white/70 mt-1">
                           Resource: {item.resource_id}
                         </div>
+                        {item.details && (
+                          <details className="mt-2">
+                            <summary className="cursor-pointer text-xs text-white/50 hover:text-white">
+                              Raw 데이터 보기
+                            </summary>
+                            <pre className="mt-1 text-xs text-white/60 overflow-auto max-h-48 bg-black/20 p-2 rounded">
+                              {JSON.stringify(item.details, null, 2)}
+                            </pre>
+                          </details>
+                        )}
                       </div>
                       <span
                         className={`px-3 py-1 rounded text-sm font-bold ${
@@ -214,6 +239,8 @@ export default function AuditCheck() {
                 ))}
               </div>
             )}
+
+           
           </div>
         )}
       </div>
