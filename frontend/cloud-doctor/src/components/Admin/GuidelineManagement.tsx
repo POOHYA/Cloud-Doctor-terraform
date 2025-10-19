@@ -91,6 +91,7 @@ export default function GuidelineManagement({
           whyDangerous: guideline.whyDangerous || '',
           whatHappens: guideline.whatHappens || '',
           checkCriteria: guideline.checkStandard || '',
+          solutionText: guideline.solutionText || '',
           sideEffect: guideline.sideEffects || '',
           checkImages: []
         },

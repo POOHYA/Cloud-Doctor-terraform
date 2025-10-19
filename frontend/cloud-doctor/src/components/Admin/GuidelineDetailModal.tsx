@@ -126,6 +126,7 @@ export const GuidelineDetailModal: React.FC<Props> = ({
                 whyDangerous: e.target.value,
                 whatHappens: formData.content?.whatHappens || '',
                 checkCriteria: formData.content?.checkCriteria || '',
+                solutionText: formData.content?.solutionText || '',
                 sideEffect: formData.content?.sideEffect || '',
                 checkImages: formData.content?.checkImages
               }})}
@@ -141,6 +142,7 @@ export const GuidelineDetailModal: React.FC<Props> = ({
                 whyDangerous: formData.content?.whyDangerous || '',
                 whatHappens: e.target.value,
                 checkCriteria: formData.content?.checkCriteria || '',
+                solutionText: formData.content?.solutionText || '',
                 sideEffect: formData.content?.sideEffect || '',
                 checkImages: formData.content?.checkImages
               }})}
@@ -156,6 +158,23 @@ export const GuidelineDetailModal: React.FC<Props> = ({
                 whyDangerous: formData.content?.whyDangerous || '',
                 whatHappens: formData.content?.whatHappens || '',
                 checkCriteria: e.target.value,
+                solutionText: formData.content?.solutionText || '',
+                sideEffect: formData.content?.sideEffect || '',
+                checkImages: formData.content?.checkImages
+              }})}
+              className="w-full border rounded px-3 py-2 h-24"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">조치 방안</label>
+            <textarea
+              value={formData.content?.solutionText || ''}
+              onChange={(e) => setFormData({...formData, content: {
+                whyDangerous: formData.content?.whyDangerous || '',
+                whatHappens: formData.content?.whatHappens || '',
+                checkCriteria: formData.content?.checkCriteria || '',
+                solutionText: e.target.value,
                 sideEffect: formData.content?.sideEffect || '',
                 checkImages: formData.content?.checkImages
               }})}
@@ -171,9 +190,19 @@ export const GuidelineDetailModal: React.FC<Props> = ({
                 whyDangerous: formData.content?.whyDangerous || '',
                 whatHappens: formData.content?.whatHappens || '',
                 checkCriteria: formData.content?.checkCriteria || '',
+                solutionText: formData.content?.solutionText || '',
                 sideEffect: e.target.value,
                 checkImages: formData.content?.checkImages
               }})}
+              className="w-full border rounded px-3 py-2 h-24"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">비고</label>
+            <textarea
+              value={formData.note1 || ''}
+              onChange={(e) => setFormData({...formData, note1: e.target.value})}
               className="w-full border rounded px-3 py-2 h-24"
             />
           </div>
