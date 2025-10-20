@@ -1,0 +1,69 @@
+name: Backend Deploy
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      PGSQL_URL: ${{ secrets.PGSQL_URL }}
+      PGSQL_USERNAME: ${{ secrets.PGSQL_USERNAME }}
+      PGSQL_PASSWORD: ${{ secrets.PGSQL_PASSWORD }}
+      REDIS_HOST: ${{ secrets.REDIS_HOST }}
+      REDIS_PORT: ${{ secrets.REDIS_PORT }}
+      ACCESS_TOKEN_EXPIRATION: ${{ secrets.ACCESS_TOKEN_EXPIRATION }}
+      REFRESH_TOKEN_EXPIRATION: ${{ secrets.REFRESH_TOKEN_EXPIRATION }}
+      COOKIE_SECURE: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: |
+          cd backend/CloudDoctorWeb
+          docker build -t cloud-doctor-backend .
+
+      - name: Save Docker image to tar
+        run: docker save cloud-doctor-backend -o cloud-doctor-backend.tar
+
+      # 1️⃣ Bastion 서버로 Docker 이미지 업로드
+      - name: Copy Docker image to Bastion
+        uses: appleboy/scp-action@v0.1.5
+        with:
+          host: ${{ secrets.BASTION_PUBLIC_IP }}
+          username: ubuntu
+          key: ${{ secrets.BASTION_SSH_KEY }}
+          source: "cloud-doctor-backend.tar"
+          target: "/home/ubuntu/"
+
+      # 2️⃣ Bastion에서 Private EC2로 전송 및 배포
+      - name: Deploy on Private EC2 via Bastion
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.BASTION_PUBLIC_IP }}
+          username: ubuntu
+          key: ${{ secrets.BASTION_SSH_KEY }}
+          script: |
+            scp -i /home/ubuntu/private-cloud-doctor.pem /home/ubuntu/cloud-doctor-backend.tar ubuntu@${{ secrets.PRIVATE_IP }}:/home/ubuntu/
+            ssh -i /home/ubuntu/private-cloud-doctor.pem ubuntu@${{ secrets.PRIVATE_IP }} << 'EOF'
+              docker load -i /home/ubuntu/cloud-doctor-backend.tar
+              docker stop cloud-doctor-backend || true
+              docker rm cloud-doctor-backend || true
+              docker run -d -p 9090:9090 \
+                -e PGSQL_URL=${PGSQL_URL} \
+                -e PGSQL_USERNAME=${PGSQL_USERNAME} \
+                -e PGSQL_PASSWORD=${PGSQL_PASSWORD} \
+                -e REDIS_HOST=${REDIS_HOST} \
+                -e REDIS_PORT=${REDIS_PORT} \
+                -e ACCESS_TOKEN_EXPIRATION=${ACCESS_TOKEN_EXPIRATION} \
+                -e REFRESH_TOKEN_EXPIRATION=${REFRESH_TOKEN_EXPIRATION} \
+                -e COOKIE_SECURE=${COOKIE_SECURE} \
+                --name cloud-doctor-backend \
+                cloud-doctor-backend
+            EOF
