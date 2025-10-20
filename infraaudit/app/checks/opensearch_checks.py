@@ -196,3 +196,64 @@ class IAMGluePassRoleCheck(BaseCheck):
             results.append(self.get_result('ERROR', 'N/A', str(e)))
         
         return {'results': results, 'raw': raw, 'guideline_id': 43}
+
+class OpenSearchVPCAccessCheck(BaseCheck):
+    async def check(self) -> List[Dict]:
+        opensearch = self.session.client('opensearch')
+        results = []
+        raw = []
+        
+        try:
+            domains = opensearch.list_domain_names()
+            
+            if not domains.get('DomainNames'):
+                results.append(self.get_result(
+                    'PASS', 'N/A',
+                    "OpenSearch 도메인이 없습니다."
+                ))
+                return {'results': results, 'raw': raw, 'guideline_id': 52}
+            
+            for domain_info in domains['DomainNames']:
+                domain_name = domain_info.get('DomainName')
+                
+                try:
+                    domain = opensearch.describe_domain(DomainName=domain_name)
+                    domain_status = domain.get('DomainStatus', {})
+                    
+                    vpc_options = domain_status.get('VPCOptions', {})
+                    vpc_id = vpc_options.get('VPCId')
+                    
+                    raw.append({
+                        'domain_name': domain_name,
+                        'vpc_id': vpc_id,
+                        'vpc_options': vpc_options,
+                        'domain_data': domain_status
+                    })
+                    
+                    if vpc_id:
+                        results.append(self.get_result(
+                            'PASS', domain_name,
+                            f"OpenSearch 도메인 {domain_name}은 VPC 액세스 전용으로 설정되어 있습니다.",
+                            {
+                                'domain_name': domain_name,
+                                'vpc_id': vpc_id,
+                                'subnet_ids': vpc_options.get('SubnetIds', [])
+                            }
+                        ))
+                    else:
+                        results.append(self.get_result(
+                            'FAIL', domain_name,
+                            f"OpenSearch 도메인 {domain_name}이 퍼블릭 엔드포인트로 설정되어 있습니다. | VPC 액세스 전용으로 설정하세요.",
+                            {
+                                'domain_name': domain_name,
+                                'vpc_id': None
+                            }
+                        ))
+                
+                except Exception as e:
+                    results.append(self.get_result('ERROR', domain_name, str(e)))
+        
+        except Exception as e:
+            results.append(self.get_result('ERROR', 'N/A', str(e)))
+        
+        return {'results': results, 'raw': raw, 'guideline_id': 52}

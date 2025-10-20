@@ -133,3 +133,113 @@ class RDSPublicAccessibilityCheck(BaseCheck):
             results.append(self.get_result('ERROR', 'N/A', str(e)))
         
         return {'results': results, 'raw': raw, 'guideline_id': 24}
+
+
+class RDSSnapshotPublicAccessCheck(BaseCheck):
+    async def check(self) -> List[Dict]:
+        rds = self.session.client('rds')
+        results = []
+        raw = []
+        
+        try:
+            # DB 스냅샷 조회
+            db_snapshots = rds.describe_db_snapshots()
+            
+            manual_db_snapshots = [s for s in db_snapshots['DBSnapshots'] if s.get('SnapshotType') == 'manual']
+            
+            if not manual_db_snapshots:
+                results.append(self.get_result(
+                    'PASS', 'N/A',
+                    "이 리전에서 관리 중인 RDS 수동 DB 스냅샷이 없습니다."
+                ))
+            else:
+                for snapshot in manual_db_snapshots:
+                    snapshot_id = snapshot['DBSnapshotIdentifier']
+                    snapshot_type = snapshot.get('SnapshotType', 'N/A')
+                    
+                    # 스냅샷 속성 조회
+                    try:
+                        attrs = rds.describe_db_snapshot_attributes(DBSnapshotIdentifier=snapshot_id)
+                        restore_attributes = attrs.get('DBSnapshotAttributesResult', {}).get('DBSnapshotAttributes', [])
+                        is_public = any(attr.get('AttributeName') == 'restore' and 'all' in attr.get('AttributeValues', []) for attr in restore_attributes)
+                    except:
+                        is_public = False
+                    
+                    raw.append({
+                        'snapshot_id': snapshot_id,
+                        'snapshot_type': snapshot_type,
+                        'is_public': is_public,
+                        'snapshot_data': snapshot
+                    })
+                    
+                    if is_public:
+                        results.append(self.get_result(
+                            'FAIL', snapshot_id,
+                            f"RDS DB 스냅샷 {snapshot_id}이 공개로 설정되어 있습니다.",
+                            {
+                                'snapshot_id': snapshot_id,
+                                'is_public': is_public,
+                                'snapshot_type': snapshot_type
+                            }
+                        ))
+                    else:
+                        results.append(self.get_result(
+                            'PASS', snapshot_id,
+                            f"RDS DB 스냅샷 {snapshot_id}은 프라이빗으로 설정되어 있습니다.",
+                            {
+                                'snapshot_id': snapshot_id,
+                                'is_public': is_public,
+                                'snapshot_type': snapshot_type
+                            }
+                        ))
+            
+            # DB 클러스터 스냅샷 조회
+            cluster_snapshots = rds.describe_db_cluster_snapshots()
+            
+            manual_cluster_snapshots = [s for s in cluster_snapshots['DBClusterSnapshots'] if s.get('SnapshotType') == 'manual']
+            
+            if manual_cluster_snapshots:
+                for snapshot in manual_cluster_snapshots:
+                    snapshot_id = snapshot['DBClusterSnapshotIdentifier']
+                    snapshot_type = snapshot.get('SnapshotType', 'N/A')
+                    
+                    # 클러스터 스냅샷 속성 조회
+                    try:
+                        attrs = rds.describe_db_cluster_snapshot_attributes(DBClusterSnapshotIdentifier=snapshot_id)
+                        restore_attributes = attrs.get('DBClusterSnapshotAttributesResult', {}).get('DBClusterSnapshotAttributes', [])
+                        is_public = any(attr.get('AttributeName') == 'restore' and 'all' in attr.get('AttributeValues', []) for attr in restore_attributes)
+                    except:
+                        is_public = False
+                    
+                    raw.append({
+                        'snapshot_id': snapshot_id,
+                        'snapshot_type': snapshot_type,
+                        'is_public': is_public,
+                        'snapshot_data': snapshot
+                    })
+                    
+                    if is_public:
+                        results.append(self.get_result(
+                            'FAIL', snapshot_id,
+                            f"RDS 클러스터 스냅샷 {snapshot_id}이 공개로 설정되어 있습니다.",
+                            {
+                                'snapshot_id': snapshot_id,
+                                'is_public': is_public,
+                                'snapshot_type': snapshot_type
+                            }
+                        ))
+                    else:
+                        results.append(self.get_result(
+                            'PASS', snapshot_id,
+                            f"RDS 클러스터 스냅샷 {snapshot_id}은 프라이빗으로 설정되어 있습니다.",
+                            {
+                                'snapshot_id': snapshot_id,
+                                'is_public': is_public,
+                                'snapshot_type': snapshot_type
+                            }
+                        ))
+        
+        except Exception as e:
+            results.append(self.get_result('ERROR', 'N/A', str(e)))
+        
+        return {'results': results, 'raw': raw, 'guideline_id': 27}

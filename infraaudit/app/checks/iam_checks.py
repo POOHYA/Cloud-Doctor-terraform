@@ -2,63 +2,6 @@ from .base_check import BaseCheck
 from datetime import datetime
 from typing import List, Dict
 
-class IAMAccessKeyAgeCheck(BaseCheck):
-    async def check(self) -> List[Dict]:
-        iam = self.session.client('iam')
-        results = []
-        
-        try:
-            users = iam.list_users()['Users']
-            
-            for user in users:
-                username = user['UserName']
-                access_keys = iam.list_access_keys(UserName=username)['AccessKeyMetadata']
-                
-                for key in access_keys:
-                    key_age = (datetime.now(key['CreateDate'].tzinfo) - key['CreateDate']).days
-                    
-                    if key_age > 90:
-                        results.append(self.get_result(
-                            '취약',
-                            key['AccessKeyId'],
-                            f"Access key for {username} is {key_age} days old (>90)",
-                            {'username': username, 'age_days': key_age}
-                        ))
-                    else:
-                        results.append(self.get_result(
-                            '양호',
-                            key['AccessKeyId'],
-                            f"Access key for {username} is {key_age} days old",
-                            {'username': username, 'age_days': key_age}
-                        ))
-        except Exception as e:
-            results.append(self.get_result('ERROR', 'N/A', str(e)))
-        
-        return results
-
-class IAMRootAccessKeyCheck(BaseCheck):
-    async def check(self) -> List[Dict]:
-        iam = self.session.client('iam')
-        results = []
-        
-        try:
-            summary = iam.get_account_summary()['SummaryMap']
-            root_keys = summary.get('AccountAccessKeysPresent', 0)
-            
-            if root_keys > 0:
-                results.append(self.get_result(
-                    'FAIL', 'root', 'Root account has access keys',
-                    {'key_count': root_keys}
-                ))
-            else:
-                results.append(self.get_result(
-                    'PASS', 'root', 'Root account has no access keys'
-                ))
-        except Exception as e:
-            results.append(self.get_result('ERROR', 'root', str(e)))
-        
-        return results
-
 class IAMRootMFACheck(BaseCheck):
     async def check(self) -> List[Dict]:
         iam = self.session.client('iam')
@@ -143,8 +86,8 @@ class IAMTrustPolicyWildcardCheck(BaseCheck):
             results.append(self.get_result('ERROR', 'N/A', str(e)))
         
         return {'results': results, 'raw': raw, 'guideline_id': 13}
-    
-    class IAMPassRoleWildcardResourceCheck(BaseCheck):
+
+class IAMPassRoleWildcardResourceCheck(BaseCheck):
     async def check(self) -> List[Dict]:
         iam = self.session.client('iam')
         results = []
@@ -370,88 +313,6 @@ class IAMIdPAssumeRoleCheck(BaseCheck):
         
         return {'results': results, 'raw': raw, 'guideline_id': 15}
 
-    
-class IAMIdPAssumeRoleCheck(BaseCheck):
-    async def check(self) -> List[Dict]:
-        iam = self.session.client('iam')
-        results = []
-        raw = []
-        
-        try:
-            roles = iam.list_roles()['Roles']
-            
-            if not roles:
-                return {'results': results, 'raw': raw, 'guideline_id': 15}
-            
-            for role in roles:
-                role_name = role['RoleName']
-                trust_policy = role['AssumeRolePolicyDocument']
-                
-                raw.append({
-                    'role_name': role_name,
-                    'trust_policy': trust_policy,
-                    'role_data': role
-                })
-                
-                has_idp_issue = False
-                
-                for statement in trust_policy.get('Statement', []):
-                    principal = statement.get('Principal', {})
-                    condition = statement.get('Condition', {})
-                    
-                    # Federated Principal이 있는지 확인 (IdP 연동)
-                    if isinstance(principal, dict) and 'Federated' in principal:
-                        federated_principal = principal['Federated']
-                        
-                        # Principal이 특정 IdP ARN이 아닌 경우 (와일드카드나 광범위한 설정)
-                        if (federated_principal == "*" or 
-                            not federated_principal.startswith('arn:aws:iam::') or
-                            ':saml-provider/' not in federated_principal and ':oidc-provider/' not in federated_principal):
-                            has_idp_issue = True
-                        
-                        # Condition이 IdP 속성으로 제한되지 않은 경우
-                        has_idp_condition = any(
-                            key.startswith(('saml:', 'oidc:', 'token.actions.githubusercontent.com:'))
-                            for condition_block in condition.values()
-                            for key in (condition_block.keys() if isinstance(condition_block, dict) else [])
-                        ) if condition else False
-                        
-                        if not has_idp_condition:
-                            has_idp_issue = True
-                
-                # IdP 연동이 있는 역할만 결과에 포함
-                if any('Federated' in statement.get('Principal', {}) 
-                       for statement in trust_policy.get('Statement', [])
-                       if isinstance(statement.get('Principal', {}), dict)):
-                    
-                    if has_idp_issue:
-                        results.append(self.get_result(
-                            '취약', role_name,
-                            f"역할 {role_name}의 IdP 연동 설정에서 Principal이 특정 IdP ARN으로 제한되지 않거나 Condition이 IdP 속성으로 제한되지 않았습니다.",
-                            {
-                                'role_name': role_name,
-                                'trust_policy': trust_policy,
-                                'has_specific_idp_principal': False,
-                                'has_idp_condition': False
-                            }
-                        ))
-                    else:
-                        results.append(self.get_result(
-                            '양호', role_name,
-                            f"역할 {role_name}의 IdP 연동 설정이 적절히 구성되어 있습니다.",
-                            {
-                                'role_name': role_name,
-                                'trust_policy': trust_policy,
-                                'has_specific_idp_principal': True,
-                                'has_idp_condition': True
-                            }
-                        ))
-                        
-        except Exception as e:
-            results.append(self.get_result('ERROR', 'N/A', str(e)))
-        
-        return {'results': results, 'raw': raw, 'guideline_id': 15}
-    
 class IAMCrossAccountAssumeRoleCheck(BaseCheck):
     async def check(self) -> List[Dict]:
         iam = self.session.client('iam')
@@ -536,4 +397,180 @@ class IAMCrossAccountAssumeRoleCheck(BaseCheck):
         
         return {'results': results, 'raw': raw, 'guideline_id': 16}
 
+class IAMAccessKeyAgeCheck(BaseCheck):
+    async def check(self) -> List[Dict]:
+        iam = self.session.client('iam')
+        results = []
+        raw = []
+        
+        try:
+            users = iam.list_users()['Users']
+            
+            for user in users:
+                username = user['UserName']
+                access_keys = iam.list_access_keys(UserName=username)['AccessKeyMetadata']
+                
+                for key in access_keys:
+                    key_age = (datetime.now(key['CreateDate'].tzinfo) - key['CreateDate']).days
+                    access_key_id = key['AccessKeyId']
+                    
+                    raw.append({
+                        'username': username,
+                        'access_key_id': access_key_id,
+                        'key_age_days': key_age,
+                        'create_date': key['CreateDate'],
+                        'status': key['Status'],
+                        'key_data': key
+                    })
+                    
+                    if key_age > 90:
+                        results.append(self.get_result(
+                            'FAIL',
+                            access_key_id,
+                            f"사용자 {username}의 액세스 키가 {key_age}일 이상 사용되고 있습니다. 90일 이내에 교체하세요.",
+                            {
+                                'username': username,
+                                'age_days': key_age,
+                                'status': key['Status']
+                            }
+                        ))
+                    else:
+                        results.append(self.get_result(
+                            'PASS',
+                            access_key_id,
+                            f"사용자 {username}의 액세스 키는 {key_age}일 전에 생성되었습니다.",
+                            {
+                                'username': username,
+                                'age_days': key_age,
+                                'status': key['Status']
+                            }
+                        ))
+        except Exception as e:
+            results.append(self.get_result('ERROR', 'N/A', str(e)))
+        
+        return {'results': results, 'raw': raw, 'guideline_id': 13}
 
+class IAMRootAccessKeyCheck(BaseCheck):
+    async def check(self) -> List[Dict]:
+        iam = self.session.client('iam')
+        results = []
+        raw = []
+        
+        try:
+            summary = iam.get_account_summary()['SummaryMap']
+            root_keys = summary.get('AccountAccessKeysPresent', 0)
+            
+            raw.append({
+                'account_type': 'root',
+                'access_keys_present': root_keys,
+                'account_summary': summary
+            })
+            
+            if root_keys > 0:
+                results.append(self.get_result(
+                    'FAIL', 'root',
+                    f"Root 계정에 {root_keys}개의 액세스 키가 있습니다. 보안상 Root 계정의 액세스 키는 삭제해야 합니다.",
+                    {
+                        'key_count': root_keys,
+                        'account_type': 'root'
+                    }
+                ))
+            else:
+                results.append(self.get_result(
+                    'PASS', 'root',
+                    "Root 계정에 액세스 키가 없습니다."
+                ))
+        except Exception as e:
+            results.append(self.get_result('ERROR', 'root', str(e)))
+        
+        return {'results': results, 'raw': raw, 'guideline_id': 15}
+
+class IAMMFACheck(BaseCheck):
+    async def check(self) -> List[Dict]:
+        iam = self.session.client('iam')
+        results = []
+        raw = []
+        
+        try:
+            # Root 계정 MFA 확인
+            summary = iam.get_account_summary()['SummaryMap']
+            root_mfa_enabled = summary.get('AccountMFAEnabled', 0)
+            
+            # 모든 IAM 사용자 조회
+            users_response = iam.list_users()
+            users = users_response.get('Users', [])
+            
+            users_without_mfa = []
+            users_with_mfa = []
+            
+            # 각 사용자의 MFA 확인
+            for user in users:
+                user_name = user.get('UserName')
+                
+                try:
+                    mfa_devices = iam.list_mfa_devices(UserName=user_name)
+                    mfa_device_list = mfa_devices.get('MFADevices', [])
+                    
+                    if mfa_device_list:
+                        users_with_mfa.append({
+                            'user_name': user_name,
+                            'mfa_device_count': len(mfa_device_list)
+                        })
+                    else:
+                        users_without_mfa.append(user_name)
+                except:
+                    users_without_mfa.append(user_name)
+            
+            raw.append({
+                'root_mfa_enabled': root_mfa_enabled == 1,
+                'total_users': len(users),
+                'users_with_mfa': users_with_mfa,
+                'users_without_mfa': users_without_mfa,
+                'account_summary': summary
+            })
+            
+            # Root 계정 MFA 미활성화
+            if root_mfa_enabled == 0:
+                results.append(self.get_result(
+                    'FAIL', 'root',
+                    "Root 계정에 MFA가 활성화되지 않았습니다.",
+                    {
+                        'mfa_enabled': False,
+                        'account_type': 'root'
+                    }
+                ))
+            else:
+                results.append(self.get_result(
+                    'PASS', 'root',
+                    "Root 계정에 MFA가 활성화되어 있습니다.",
+                    {
+                        'mfa_enabled': True,
+                        'account_type': 'root'
+                    }
+                ))
+            
+            # IAM 사용자 MFA 확인
+            if users_without_mfa:
+                results.append(self.get_result(
+                    'FAIL', 'iam_users',
+                    f"다음 IAM 사용자에 MFA가 설정되지 않았습니다: {', '.join(users_without_mfa)}",
+                    {
+                        'users_without_mfa': users_without_mfa,
+                        'users_with_mfa_count': len(users_with_mfa),
+                        'users_without_mfa_count': len(users_without_mfa)
+                    }
+                ))
+            elif len(users) > 0:
+                results.append(self.get_result(
+                    'PASS', 'iam_users',
+                    f"모든 IAM 사용자에 MFA가 설정되어 있습니다.",
+                    {
+                        'users_with_mfa_count': len(users_with_mfa),
+                        'total_users': len(users)
+                    }
+                ))
+            
+        except Exception as e:
+            results.append(self.get_result('ERROR', 'N/A', str(e)))
+        
+        return {'results': results, 'raw': raw, 'guideline_id': 16}

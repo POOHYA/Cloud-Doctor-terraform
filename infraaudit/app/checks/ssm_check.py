@@ -119,3 +119,68 @@ class IAMSSMCommandPolicyCheck(BaseCheck):
             results.append(self.get_result('ERROR', 'N/A', str(e)))
         
         return {'results': results, 'raw': raw, 'guideline_id': 35}
+    
+class SSMDocumentPublicAccessCheck(BaseCheck):
+    async def check(self) -> List[Dict]:
+        ssm = self.session.client('ssm')
+        results = []
+        raw = []
+        
+        try:
+            documents = ssm.list_documents(Filters=[{'Key': 'Owner', 'Values': ['Self']}])
+            
+            if not documents.get('DocumentIdentifiers'):
+                results.append(self.get_result(
+                    'PASS', 'N/A',
+                    "소유한 SSM 문서가 없습니다."
+                ))
+                return {'results': results, 'raw': raw, 'guideline_id': 46}
+            
+            for doc in documents['DocumentIdentifiers']:
+                doc_name = doc.get('Name')
+                
+                try:
+                    # 문서 권한 조회
+                    permissions = ssm.describe_document_permission(
+                        Name=doc_name,
+                        PermissionType='Share'
+                    )
+                    
+                    account_ids = permissions.get('AccountIds', [])
+                    is_public = 'all' in account_ids
+                    
+                    raw.append({
+                        'document_name': doc_name,
+                        'account_ids': account_ids,
+                        'is_public': is_public,
+                        'document_data': doc
+                    })
+                    
+                    if is_public:
+                        results.append(self.get_result(
+                            'FAIL', doc_name,
+                            f"SSM 문서 {doc_name}이 퍼블릭으로 공유되어 있습니다.",
+                            {
+                                'document_name': doc_name,
+                                'is_public': True,
+                                'account_ids': account_ids
+                            }
+                        ))
+                    else:
+                        results.append(self.get_result(
+                            'PASS', doc_name,
+                            f"SSM 문서 {doc_name}은 프라이빗으로 설정되어 있습니다.",
+                            {
+                                'document_name': doc_name,
+                                'is_public': False,
+                                'account_ids': account_ids
+                            }
+                        ))
+                
+                except Exception as e:
+                    results.append(self.get_result('ERROR', doc_name, str(e)))
+        
+        except Exception as e:
+            results.append(self.get_result('ERROR', 'N/A', str(e)))
+        
+        return {'results': results, 'raw': raw, 'guideline_id': 46}

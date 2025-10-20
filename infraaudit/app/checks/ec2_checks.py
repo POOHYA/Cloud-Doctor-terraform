@@ -1,5 +1,6 @@
 from .base_check import BaseCheck
 from typing import List, Dict
+import ipaddress
 
 class EC2IMDSv2Check(BaseCheck):
     async def check(self) -> List[Dict]:
@@ -219,5 +220,113 @@ class EBSSnapshotPrivateCheck(BaseCheck):
             results.append(self.get_result('ERROR', 'N/A', str(e)))
         
         return {'results': results, 'raw': raw, 'guideline_id': 6}
-    
+
+class SecurityGroupRemoteAccessCheck(BaseCheck):
+    async def check(self) -> List[Dict]:
+        ec2 = self.session.client('ec2')
+        results = []
+        raw = []
+        
+        try:
+            security_groups = ec2.describe_security_groups()
+            
+            if not security_groups['SecurityGroups']:
+                results.append(self.get_result(
+                    'PASS', 'N/A',
+                    "Security Group이 존재하지 않습니다."
+                ))
+                return {'results': results, 'raw': raw, 'guideline_id': 5}
+            
+            for sg in security_groups['SecurityGroups']:
+                sg_id = sg['GroupId']
+                sg_name = sg.get('GroupName', 'N/A')
+                inbound_rules = sg.get('IpPermissions', [])
+                
+                sg_has_violation = False
+                violations = []
+                
+                for rule in inbound_rules: # raw 데이터 수집 전에 미리 raw에 추가하려면 수정 필요
+                    from_port = rule.get('FromPort')
+                    to_port = rule.get('ToPort')
+                    
+                    # SSH(22) 또는 RDP(3389) 포트인지 확인
+                    if from_port is None or to_port is None:
+                        continue
+                    
+                    is_target_port = (from_port <= 22 <= to_port) or (from_port <= 3389 <= to_port)
+                    
+                    if not is_target_port:
+                        continue
+                    
+                    # IPv4 CIDR 검사
+                    ipv4_ranges = rule.get('IpRanges', [])
+                    for cidr_range in ipv4_ranges:
+                        cidr = cidr_range.get('CidrIp')
+                        description = cidr_range.get('Description', '')
+                        
+                        try:
+                            network = ipaddress.IPv4Network(cidr, strict=False)
+                            # /16보다 넓으면 (prefixlen < 16) FAIL
+                            if network.prefixlen < 16:
+                                sg_has_violation = True
+                                violations.append({
+                                    'port': f"{from_port}-{to_port}",
+                                    'cidr': cidr,
+                                    'prefix_len': network.prefixlen,
+                                    'description': description
+                                })
+                        except ValueError:
+                            pass
+                    
+                    # IPv6 CIDR 검사
+                    ipv6_ranges = rule.get('Ipv6Ranges', [])
+                    for cidr_range in ipv6_ranges:
+                        cidr = cidr_range.get('CidrIpv6')
+                        description = cidr_range.get('Description', '')
+                        
+                        try:
+                            network = ipaddress.IPv6Network(cidr, strict=False)
+                            # /32보다 넓으면 (prefixlen < 32) FAIL
+                            if network.prefixlen < 32:
+                                sg_has_violation = True
+                                violations.append({
+                                    'port': f"{from_port}-{to_port}",
+                                    'cidr': cidr,
+                                    'prefix_len': network.prefixlen,
+                                    'description': description
+                                })
+                        except ValueError:
+                            pass
+                
+                raw.append({
+                    'sg_id': sg_id,
+                    'sg_name': sg_name,
+                    'inbound_rules': inbound_rules,
+                    'violations': violations,
+                    'sg_data': sg
+                })
+                
+                if sg_has_violation:
+                    results.append(self.get_result(
+                        'FAIL', sg_id,
+                        f"Security Group {sg_name}({sg_id})에 SSH 또는 RDP 포트가 /16보다 넓은 CIDR로 열려있습니다.",
+                        {
+                            'sg_name': sg_name,
+                            'violations': violations
+                        }
+                    ))
+                else:
+                    results.append(self.get_result(
+                        'PASS', sg_id,
+                        f"Security Group {sg_name}({sg_id})는 SSH/RDP 포트가 안전하게 구성되어 있습니다.",
+                        {
+                            'sg_name': sg_name,
+                            'inbound_rules': inbound_rules
+                        }
+                    ))
+        
+        except Exception as e:
+            results.append(self.get_result('ERROR', 'N/A', str(e)))
+        
+        return {'results': results, 'raw': raw, 'guideline_id': 5}
     

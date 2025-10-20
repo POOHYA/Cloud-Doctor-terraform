@@ -74,3 +74,65 @@ class CloudTrailManagementEventsCheck(BaseCheck):
             results.append(self.get_result('ERROR', 'N/A', str(e)))
         
         return {'results': results, 'raw': raw, 'guideline_id': 26}
+    
+class CloudTrailLoggingCheck(BaseCheck):
+    async def check(self) -> List[Dict]:
+        cloudtrail = self.session.client('cloudtrail')
+        results = []
+        raw = []
+        
+        try:
+            trails = cloudtrail.describe_trails()
+            
+            if not trails['trailList']:
+                results.append(self.get_result(
+                    'FAIL', 'N/A',
+                    "CloudTrail 추적이 없습니다."
+                ))
+                return {'results': results, 'raw': raw, 'guideline_id': 30}
+            
+            for trail in trails['trailList']:
+                trail_name = trail.get('Name')
+                trail_arn = trail.get('TrailARN')
+                trail_status = cloudtrail.get_trail_status(Name=trail_name)
+                is_logging = trail_status.get('IsLogging', False)
+                
+                # 추적 설정
+                is_multi_region = trail.get('IsMultiRegionTrail', False)
+                is_organization_trail = trail.get('IsOrganizationTrail', False)
+                
+                raw.append({
+                    'trail_name': trail_name,
+                    'trail_arn': trail_arn,
+                    'is_logging': is_logging,
+                    'is_multi_region': is_multi_region,
+                    'is_organization_trail': is_organization_trail,
+                    'trail_data': trail,
+                    'trail_status': trail_status
+                })
+                
+                if not is_logging:
+                    results.append(self.get_result(
+                        'FAIL', trail_name,
+                        f"CloudTrail 추적 {trail_name}은 로깅이 비활성화되어 있습니다.",
+                        {
+                            'trail_name': trail_name,
+                            'is_logging': is_logging,
+                            'is_organization_trail': is_organization_trail
+                        }
+                    ))
+                else:
+                    results.append(self.get_result(
+                        'PASS', trail_name,
+                        f"CloudTrail 추적 {trail_name}은 로깅이 활성화되어 있습니다.",
+                        {
+                            'trail_name': trail_name,
+                            'is_logging': is_logging,
+                            'is_organization_trail': is_organization_trail
+                        }
+                    ))
+        
+        except Exception as e:
+            results.append(self.get_result('ERROR', 'N/A', str(e)))
+        
+        return {'results': results, 'raw': raw, 'guideline_id': 30}
