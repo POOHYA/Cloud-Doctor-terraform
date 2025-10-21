@@ -4,7 +4,7 @@ on:
   workflow_dispatch:  # 수동 트리거
   pull_request:
     branches:
-      - develop  # develop 브랜치 pull_request 시 자동 배포
+      - main  # main 브랜치 pull_request 시 자동 배포
 
 jobs:
   build-and-deploy:
