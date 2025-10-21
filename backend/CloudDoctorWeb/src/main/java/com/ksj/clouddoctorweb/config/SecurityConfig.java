@@ -54,8 +54,10 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList(
             "https://localhost:3001", 
-            "https://clouddoctor.takustory.site",
-            "https://clouddoctor.site"
+            "https://back.takustory.site",
+            "https://www.cloud-doctor.site",
+            "https://cloud-doctor.site",
+            "https://api.cloud-doctor.site"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
