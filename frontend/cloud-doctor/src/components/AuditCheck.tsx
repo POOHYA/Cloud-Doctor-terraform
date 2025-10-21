@@ -143,9 +143,18 @@ export default function AuditCheck() {
             </div> */}
 
             <div>
-              <label className="block text-beige mb-2">
-                점검 항목 (선택 안하면 전체)
-              </label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-beige">
+                  점검 항목 (선택 안하면 전체)
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setSelectedChecks([])}
+                  className="text-xs text-beige/70 hover:text-beige underline"
+                >
+                  초기화
+                </button>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {AVAILABLE_CHECKS.map((check) => (
                   <label
@@ -196,31 +205,31 @@ export default function AuditCheck() {
               <div className="grid grid-cols-5 gap-4 mb-6">
                 <div className="bg-white/10 p-4 rounded text-center">
                   <div className="text-2xl font-bold text-white">
-                    {(result.summary as any)["전체"] || 0}
+                    {result.summary.total}
                   </div>
                   <div className="text-sm text-beige">전체</div>
                 </div>
                 <div className="bg-green-500/20 p-4 rounded text-center">
                   <div className="text-2xl font-bold text-green-400">
-                    {(result.summary as any)["양호"] || 0}
+                    {result.summary.pass}
                   </div>
                   <div className="text-sm text-beige">양호</div>
                 </div>
                 <div className="bg-red-500/20 p-4 rounded text-center">
                   <div className="text-2xl font-bold text-red-400">
-                    {(result.summary as any)["취약"] || 0}
+                    {result.summary.fail}
                   </div>
                   <div className="text-sm text-beige">취약</div>
                 </div>
                 <div className="bg-yellow-500/20 p-4 rounded text-center">
                   <div className="text-2xl font-bold text-yellow-400">
-                    {(result.summary as any)["경고"] || 0}
+                    {result.summary.warn}
                   </div>
                   <div className="text-sm text-beige">경고</div>
                 </div>
                 <div className="bg-gray-500/20 p-4 rounded text-center">
                   <div className="text-2xl font-bold text-gray-400">
-                    {(result.summary as any)["오류"] || 0}
+                    {result.summary.error}
                   </div>
                   <div className="text-sm text-beige">오류</div>
                 </div>
@@ -234,15 +243,15 @@ export default function AuditCheck() {
                   <div
                     key={idx}
                     className={`p-4 rounded ${
-                      item.status === "양호"
+                      item.status === "PASS"
                         ? "bg-green-500/10 border-green-500"
-                        : item.status === "취약"
+                        : item.status === "FAIL"
                         ? "bg-red-500/10 border-red-500"
                         : "bg-gray-500/10 border-gray-500"
                     } border`}
                   >
                     <div className="flex justify-between items-start gap-4">
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="font-bold text-white">
                           {item.check_id}
                         </div>
@@ -254,54 +263,58 @@ export default function AuditCheck() {
                         </div>
                         {item.details && (
                           <details className="mt-2">
-                            <summary className="cursor-pointer text-xs text-white/50 hover:text-white">
+                            <summary className="cursor-pointer text-xs text-white/50 hover:text-white font-bold">
                               Raw 데이터 보기
                             </summary>
-                            <pre className="mt-1 text-xs text-white/60 overflow-auto max-h-48 bg-black/20 p-2 rounded">
+                            <pre className="mt-1 text-xs text-white/60 overflow-x-auto max-h-48 bg-black/20 p-2 rounded whitespace-pre">
                               {JSON.stringify(item.details, null, 2)}
                             </pre>
                           </details>
                         )}
                       </div>
-                      <div className="flex flex-col items-end gap-2">
+                      <div className="flex flex-col items-end gap-2 flex-shrink-0">
                         <span
                           className={`px-3 py-1 rounded text-sm font-bold ${
-                            item.status === "양호"
+                            item.status === "PASS"
                               ? "bg-green-500 text-white"
-                              : item.status === "취약"
+                              : item.status === "FAIL"
                               ? "bg-red-500 text-white"
+                              : item.status === "WARN"
+                              ? "bg-yellow-500 text-white"
                               : "bg-gray-500 text-white"
                           }`}
                         >
-                          {item.status}
+                          {item.status === "FAIL"
+                            ? "취약"
+                            : item.status === "PASS"
+                            ? "양호"
+                            : item.status === "ERROR"
+                            ? "오류"
+                            : item.status === "WARN"
+                            ? "경고"
+                            : item.status}
                         </span>
-                        {(() => {
-                          console.log('Check:', item.check_id);
-                          console.log('Status:', item.status);
-                          console.log('Guideline ID:', result.guideline_ids?.[item.check_id]);
-                          console.log('Service:', CHECK_TO_SERVICE[item.check_id]);
-                          return (item.status === "취약" || item.status === "경고") &&
-                            result.guideline_ids?.[item.check_id] &&
-                            CHECK_TO_SERVICE[item.check_id];
-                        })() && (
-                          <button
-                            onClick={() => {
-                              const guidelineId =
-                                result.guideline_ids?.[item.check_id];
-                              if (guidelineId) {
-                                window.open(
-                                  `/guide/${
-                                    CHECK_TO_SERVICE[item.check_id]
-                                  }/${guidelineId}`,
-                                  "_blank"
-                                );
-                              }
-                            }}
-                            className="px-3 py-1 rounded text-xs font-medium bg-beige/20 text-beige hover:bg-beige hover:text-primary-dark transition-colors cursor-pointer"
-                          >
-                            조치방안
-                          </button>
-                        )}
+                        {(item.status === "FAIL" || item.status === "WARN") &&
+                          result.guideline_ids?.[item.check_id] &&
+                          CHECK_TO_SERVICE[item.check_id] && (
+                            <button
+                              onClick={() => {
+                                const guidelineId =
+                                  result.guideline_ids?.[item.check_id];
+                                if (guidelineId) {
+                                  window.open(
+                                    `/guide/${
+                                      CHECK_TO_SERVICE[item.check_id]
+                                    }/${guidelineId}`,
+                                    "_blank"
+                                  );
+                                }
+                              }}
+                              className="px-3 py-1 rounded text-xs font-medium bg-beige/20 text-beige hover:bg-beige hover:text-primary-dark transition-colors cursor-pointer"
+                            >
+                              조치방안
+                            </button>
+                          )}
                       </div>
                     </div>
                   </div>

@@ -1,6 +1,7 @@
 from .base_check import BaseCheck
 from datetime import datetime
 from typing import List, Dict
+import json
 
 class GuardDutyStatusCheck(BaseCheck):
     async def check(self) -> List[Dict]:
@@ -15,8 +16,8 @@ class GuardDutyStatusCheck(BaseCheck):
             
             if not detectors['DetectorIds']:
                 results.append(self.get_result(
-                    '취약', 'N/A',
-                    "현재 리전에서 GuardDuty가 활성화되지 않았습니다."
+                    'FAIL', 'N/A',
+                    "현재 리전에서 GuardDuty가 활성화되지 않았습니다. 관리자 계정에서 모든 멤버 계정과 모든 사용 리전에 일괄 활성화를 적용하고 신규 계정 자동 가입을 설정해야 합니다."
                 ))
                 return {'results': results, 'raw': raw, 'guideline_id': 37}
             
@@ -32,8 +33,8 @@ class GuardDutyStatusCheck(BaseCheck):
                     
                     if detector['Status'] != 'ENABLED':
                         results.append(self.get_result(
-                            '취약', detector_id,
-                            f"GuardDuty 탐지기 {detector_id}가 비활성화 상태입니다: {detector['Status']}",
+                            'FAIL', detector_id,
+                            f"GuardDuty 탐지기 {detector_id}가 비활성화 상태입니다: {detector['Status']} 관리자 계정에서 모든 멤버 계정과 모든 사용 리전에 일괄 활성화를 적용하고 신규 계정 자동 가입을 설정해야 합니다.",
                             {
                                 'detector_id': detector_id,
                                 'status': detector['Status'],
@@ -51,8 +52,8 @@ class GuardDutyStatusCheck(BaseCheck):
                             
                             if not auto_enable:
                                 results.append(self.get_result(
-                                    '취약', detector_id,
-                                    f"GuardDuty 탐지기 {detector_id}에서 신규 계정 자동 등록이 비활성화되어 있습니다.",
+                                    'FAIL', detector_id,
+                                    f"GuardDuty 탐지기 {detector_id}에서 신규 계정 자동 등록이 비활성화되어 있습니다. 관리자 계정에서 모든 멤버 계정과 모든 사용 리전에 일괄 활성화를 적용하고 신규 계정 자동 가입을 설정해야 합니다.",
                                     {
                                         'detector_id': detector_id,
                                         'status': detector['Status'],
@@ -62,7 +63,7 @@ class GuardDutyStatusCheck(BaseCheck):
                                 ))
                             else:
                                 results.append(self.get_result(
-                                    '양호', detector_id,
+                                    'PASS', detector_id,
                                     f"GuardDuty 탐지기 {detector_id}가 활성화되어 있고 신규 계정 자동 등록이 설정되어 있습니다.",
                                     {
                                         'detector_id': detector_id,
@@ -74,7 +75,7 @@ class GuardDutyStatusCheck(BaseCheck):
                         except Exception:
                             # Organizations 연동이 없는 경우
                             results.append(self.get_result(
-                                '양호', detector_id,
+                                'PASS', detector_id,
                                 f"GuardDuty 탐지기 {detector_id}가 활성화되어 있습니다.",
                                 {
                                     'detector_id': detector_id,

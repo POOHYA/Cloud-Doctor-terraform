@@ -14,7 +14,7 @@ class S3PublicAccessAndPolicyCheck(BaseCheck):
             buckets = s3.list_buckets()
             
             if not buckets.get('Buckets'):
-                results.append(self.get_result('양호', 'N/A', "점검할 S3 버킷이 존재하지 않습니다."))
+                results.append(self.get_result('PASS', 'N/A', "점검할 S3 버킷이 존재하지 않습니다."))
                 return {'results': results, 'raw': raw, 'guideline_id': 7}
 
             for bucket in buckets['Buckets']:
@@ -114,7 +114,7 @@ class S3PublicAccessAndPolicyCheck(BaseCheck):
                     })
                     
                     # ========== 4. 판정 로직 (OR 조건) ==========
-                    # 하나라도 문제가 있으면 '취약'
+                    # 하나라도 문제가 있으면 취약
                     vulnerability_reasons = []
                     recommendations = []
                     
@@ -137,7 +137,7 @@ class S3PublicAccessAndPolicyCheck(BaseCheck):
                     
                     # 판정
                     if vulnerability_reasons:
-                        status = '취약'
+                        status = 'FAIL'
                         reasons_text = " 또한 ".join(vulnerability_reasons)
                         recommendations_text = " ".join(recommendations)
                         message = f"버킷 [{bucket_name}]이(가) 취약합니다: {reasons_text}. {recommendations_text}."
@@ -153,7 +153,7 @@ class S3PublicAccessAndPolicyCheck(BaseCheck):
                             }
                         ))
                     else:
-                        status = '양호'
+                        status = 'PASS'
                         message = f"버킷 [{bucket_name}]은 모든 퍼블릭 액세스가 차단되어 있고, 위험한 버킷 정책이 없습니다."
                         
                         results.append(self.get_result(
@@ -170,24 +170,24 @@ class S3PublicAccessAndPolicyCheck(BaseCheck):
                     
                     if error_code == 'AccessDenied':
                         results.append(self.get_result(
-                            '오류', bucket_name,
+                            'ERROR', bucket_name,
                             f"버킷 [{bucket_name}]의 설정 조회 권한이 없습니다."
                         ))
                     else:
                         results.append(self.get_result(
-                            '오류', bucket_name,
+                            'ERROR', bucket_name,
                             f"버킷 [{bucket_name}] 점검 중 오류 발생: {error_code}"
                         ))
                 
                 except Exception as e:
                     raw.append({'bucket_name': bucket_name, 'error': str(e)})
                     results.append(self.get_result(
-                        '오류', bucket_name,
+                        'ERROR', bucket_name,
                         f"버킷 [{bucket_name}] 점검 중 예상치 못한 오류 발생: {str(e)}"
                     ))
         
         except Exception as e:
-            results.append(self.get_result('오류', 'N/A', f"S3 버킷 목록 조회 중 오류 발생: {str(e)}"))
+            results.append(self.get_result('ERROR', 'N/A', f"S3 버킷 목록 조회 중 오류 발생: {str(e)}"))
         
         return {'results': results, 'raw': raw, 'guideline_id': 1}
 
@@ -212,7 +212,7 @@ class S3ACLCheck(BaseCheck):
             buckets_response = s3.list_buckets()
             
             if not buckets_response.get('Buckets'):
-                results.append(self.get_result('양호', 'N/A', "점검할 S3 버킷이 존재하지 않습니다."))
+                results.append(self.get_result('PASS', 'N/A', "점검할 S3 버킷이 존재하지 않습니다."))
                 return {'results': results, 'raw': raw, 'guideline_id': 8}
 
             owner_id = buckets_response['Owner']['ID']
@@ -287,7 +287,7 @@ class S3ACLCheck(BaseCheck):
                     
                     if owner_only:
                         # ✅ 버킷 소유자만 권한 보유 - 양호
-                        status = '양호'
+                        status = 'PASS'
                         message = f"버킷 [{bucket_name}]은 버킷 소유자만 접근 권한을 가지고 있습니다."
                     
                     elif public_grants:
@@ -296,29 +296,29 @@ class S3ACLCheck(BaseCheck):
                         grantee_names = ', '.join(set([g['group'] for g in public_grants]))
                         
                         if dangerous_count > 0:
-                            status = '취약'
+                            status = 'FAIL'
                             perms = ', '.join([f"{g['group']}({g['permission']})" for g in public_grants if g['is_dangerous']])
                             message = f"버킷 [{bucket_name}]이 Public 그룹에 위험한 권한({perms})을 허용합니다. 해당 피부여자({grantee_names})를 체크 해제하거나 삭제해야 합니다."
                         else:
-                            status = '취약'
+                            status = 'FAIL'
                             perms = ', '.join([f"{g['group']}({g['permission']})" for g in public_grants])
                             message = f"버킷 [{bucket_name}]이 Public 그룹 접근({perms})을 허용합니다. 해당 피부여자({grantee_names})를 체크 해제하거나 삭제해야 합니다."
                     
                     elif group_grants:
                         # 🟡 S3 로그 전달 그룹 등 다른 그룹 접근
-                        status = '취약'
+                        status = 'FAIL'
                         groups_info = ', '.join([f"{g['group']}({g['permission']})" for g in group_grants])
                         grantee_names = ', '.join(set([g['group'] for g in group_grants]))
                         message = f"버킷 [{bucket_name}]이 그룹 접근({groups_info})을 허용합니다. 해당 피부여자({grantee_names})를 체크 해제하거나 삭제해야 합니다."
                     
                     elif external_grants:
                         # 🟡 다른 AWS 계정 접근
-                        status = '취약'
+                        status = 'FAIL'
                         message = f"버킷 [{bucket_name}]이 {len(external_grants)}개의 외부 AWS 계정에 접근 권한을 부여했습니다. 해당 피부여자(외부 AWS 계정)를 체크 해제하거나 삭제해야 합니다."
                     
                     else:
                         # 이론상 여기 도달하지 않지만 안전장치
-                        status = '오류'
+                        status = 'ERROR'
                         message = f"버킷 [{bucket_name}]의 ACL 구성을 확인할 수 없습니다."
                     
                     results.append(self.get_result(status, bucket_name, message, bucket_data))
@@ -329,23 +329,23 @@ class S3ACLCheck(BaseCheck):
                     
                     if error_code == 'AccessDenied':
                         results.append(self.get_result(
-                            '오류', bucket_name,
+                            'ERROR', bucket_name,
                             f"버킷 [{bucket_name}]의 ACL 조회 권한이 없습니다."
                         ))
                     else:
                         results.append(self.get_result(
-                            '오류', bucket_name,
+                            'ERROR', bucket_name,
                             f"버킷 [{bucket_name}]의 ACL 조회 중 오류 발생: {error_code}"
                         ))
                 
                 except Exception as e:
                     results.append(self.get_result(
-                        '오류', bucket_name,
+                        'ERROR', bucket_name,
                         f"버킷 [{bucket_name}] 점검 중 예상치 못한 오류: {str(e)}"
                     ))
         
         except Exception as e:
-            results.append(self.get_result('오류', 'N/A', f"S3 버킷 목록 조회 중 오류 발생: {str(e)}"))
+            results.append(self.get_result('ERROR', 'N/A', f"S3 버킷 목록 조회 중 오류 발생: {str(e)}"))
         
         return {'results': results, 'raw': raw, 'guideline_id': 2}
 
@@ -365,7 +365,7 @@ class S3ReplicationRuleCheck(BaseCheck):
             buckets = s3.list_buckets()
             
             if not buckets.get('Buckets'):
-                results.append(self.get_result('양호', 'N/A', "점검할 S3 버킷이 존재하지 않습니다."))
+                results.append(self.get_result('PASS', 'N/A', "점검할 S3 버킷이 존재하지 않습니다."))
                 return {'results': results, 'raw': raw, 'guideline_id': 3}
 
             for bucket in buckets['Buckets']:
@@ -412,13 +412,13 @@ class S3ReplicationRuleCheck(BaseCheck):
                     
                     if vulnerable_rules:
                         results.append(self.get_result(
-                            '취약', bucket_name,
+                            'FAIL', bucket_name,
                             f"버킷 [{bucket_name}]의 복제 규칙이 허용되지 않은 대상 버킷으로 설정되어 있습니다.",
                             bucket_data
                         ))
                     else:
                         results.append(self.get_result(
-                            '취약', bucket_name,
+                            'FAIL', bucket_name,
                             f"버킷 [{bucket_name}]의 복제 규칙이 안전하게 설정되어 있습니다.",
                             bucket_data
                         ))
@@ -427,13 +427,13 @@ class S3ReplicationRuleCheck(BaseCheck):
                     if e.response['Error']['Code'] == 'ReplicationConfigurationNotFoundError':
                         raw.append({'bucket_name': bucket_name, 'replication_config': None})
                         results.append(self.get_result(
-                            '양호', bucket_name,
+                            'PASS', bucket_name,
                             f"버킷 [{bucket_name}]에 복제 규칙이 설정되어 있지 않습니다."
                         ))
                     else:
                         raw.append({'bucket_name': bucket_name, 'error': str(e)})
                         results.append(self.get_result(
-                            '오류', bucket_name,
+                            'ERROR', bucket_name,
                             f"버킷 [{bucket_name}]의 복제 설정 조회 중 오류: {e.response['Error']['Code']}"
                         ))
         
@@ -447,5 +447,5 @@ class S3EncryptionCheck(BaseCheck):
     
     async def check(self) -> Dict:
         results = []
-        results.append(self.get_result('양호', 'N/A', 'S3 암호화 설정 점검이 구현되지 않았습니다.'))
+        results.append(self.get_result('PASS', 'N/A', 'S3 암호화 설정 점검이 구현되지 않았습니다.'))
         return {'results': results, 'raw': [], 'guideline_id': 10}

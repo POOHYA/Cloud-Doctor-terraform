@@ -136,11 +136,11 @@ class AuditService:
     
     def _generate_summary(self, results: List[Dict]) -> Dict:
         summary = {
-            '전체': len(results),
-            '양호': 0,
-            '취약': 0,
-            '경고': 0,
-            '오류': 0
+            'total': len(results),
+            'pass': 0,
+            'fail': 0,
+            'warn': 0,
+            'error': 0
         }
         
         for result in results:

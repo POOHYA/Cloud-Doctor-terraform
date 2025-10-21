@@ -24,7 +24,7 @@ class SQSAccessPolicyCheck(BaseCheck):
             
             if 'QueueUrls' not in queues:
                 results.append(self.get_result(
-                    '양호', 'N/A',
+                    'PASS', 'N/A',
                     "SQS 큐가 존재하지 않습니다."
                 ))
                 return {'results': results, 'raw': raw, 'guideline_id': 1}
@@ -41,7 +41,7 @@ class SQSAccessPolicyCheck(BaseCheck):
                     
                     if not policy_str:
                         results.append(self.get_result(
-                            '양호', queue_arn,
+                            'PASS', queue_arn,
                             f"큐 {queue_arn}에 액세스 정책이 설정되지 않았습니다.",
                             {'policy': None}
                         ))
@@ -81,7 +81,7 @@ class SQSAccessPolicyCheck(BaseCheck):
                     
                     if vulnerable:
                         results.append(self.get_result(
-                            '취약', queue_arn,
+                            'FAIL', queue_arn,
                             f"큐 {queue_arn}의 액세스 정책에서 부적절한 Principal 설정이 발견되었습니다: {', '.join(issues)}. 액세스 정책에서 Principal을 특정 계정/역할/서비스 ARN으로만 제한해야 합니다.",
                             {
                                 'policy': policy,
@@ -90,7 +90,7 @@ class SQSAccessPolicyCheck(BaseCheck):
                         ))
                     else:
                         results.append(self.get_result(
-                            '양호', queue_arn,
+                            'PASS', queue_arn,
                             f"큐 {queue_arn}의 액세스 정책이 적절히 설정되어 있습니다.",
                             {'policy': policy}
                         ))

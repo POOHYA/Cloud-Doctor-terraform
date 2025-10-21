@@ -13,7 +13,7 @@ class EC2IMDSv2Check(BaseCheck):
             
             if not instances['Reservations']:
                 results.append(self.get_result(
-                    '양호', 'N/A',
+                    'PASS', 'N/A',
                     "EC2 인스턴스가 존재하지 않습니다."
                 ))
                 return {'results': results, 'raw': raw, 'guideline_id': 1}
@@ -32,7 +32,7 @@ class EC2IMDSv2Check(BaseCheck):
                     
                     if http_tokens != 'required':
                         results.append(self.get_result(
-                            '취약', instance_id,
+                            'FAIL', instance_id,
                             f"인스턴스 {instance_id}는 IMDSv2가 Optional로 설정되어 있습니다. EC2 인스턴스에서 IMDSv2를 필수로 설정해야 합니다.",
                             {
                                 'http_tokens': http_tokens,
@@ -43,7 +43,7 @@ class EC2IMDSv2Check(BaseCheck):
                         ))
                     else:
                         results.append(self.get_result(
-                            '양호', instance_id,
+                            'PASS', instance_id,
                             f"인스턴스 {instance_id}는 IMDSv2가 필수로 설정되어 있습니다.",
                             {
                                 'http_tokens': http_tokens,
@@ -68,7 +68,7 @@ class EC2AMIPrivateCheck(BaseCheck):
             
             if not amis['Images']:
                 results.append(self.get_result(
-                    '양호', 'N/A',
+                    'PASS', 'N/A',
                     "이 리전에서 관리 중인 AMI가 없습니다."
                 ))
                 return {'results': results, 'raw': raw, 'guideline_id': 3}
@@ -98,7 +98,7 @@ class EC2AMIPrivateCheck(BaseCheck):
                     
                     if is_public:
                         results.append(self.get_result(
-                            '취약', ami_id,
+                            'FAIL', ami_id,
                             f"AMI {ami_name} ({ami_id})이 Public으로 설정되어 있습니다. AMI 가용성을 확인하여 프라이빗으로 설정해야 합니다.",
                             {
                                 'ami_id': ami_id,
@@ -111,7 +111,7 @@ class EC2AMIPrivateCheck(BaseCheck):
                         if launch_permissions:
                             shared_accounts = [perm.get('UserId') for perm in launch_permissions if 'UserId' in perm]
                             results.append(self.get_result(
-                                '양호', ami_id,
+                                'PASS', ami_id,
                                 f"AMI {ami_name} ({ami_id})은 Private이며, {len(shared_accounts)}개 계정과 공유되어 있습니다.",
                                 {
                                     'ami_id': ami_id,
@@ -122,7 +122,7 @@ class EC2AMIPrivateCheck(BaseCheck):
                             ))
                         else:
                             results.append(self.get_result(
-                                '양호', ami_id,
+                                'PASS', ami_id,
                                 f"AMI {ami_name} ({ami_id})은 Private으로 설정되어 있습니다.",
                                 {
                                     'ami_id': ami_id,
@@ -153,7 +153,7 @@ class EBSSnapshotPrivateCheck(BaseCheck):
             
             if not snapshots['Snapshots']:
                 results.append(self.get_result(
-                    '양호', 'N/A',
+                    'PASS', 'N/A',
                     "이 리전에서 관리 중인 EBS 스냅샷이 없습니다."
                 ))
                 return {'results': results, 'raw': raw, 'guideline_id': 4}
@@ -180,7 +180,7 @@ class EBSSnapshotPrivateCheck(BaseCheck):
                 
                 if is_public:
                     results.append(self.get_result(
-                        '취약', snapshot_id,
+                        'FAIL', snapshot_id,
                         f"EBS 스냅샷 {snapshot_id}이 공개로 설정되어 있습니다. 소유한 EBS 스냅샷을 Private 상태로 유지해야 합니다.",
                         {
                             'snapshot_description': snapshot_desc,
@@ -190,7 +190,7 @@ class EBSSnapshotPrivateCheck(BaseCheck):
                     ))
                 else:
                     results.append(self.get_result(
-                        '양호', snapshot_id,
+                        'PASS', snapshot_id,
                         f"EBS 스냅샷 {snapshot_id}은 프라이빗으로 설정되어 있습니다.",
                         {
                             'snapshot_description': snapshot_desc,

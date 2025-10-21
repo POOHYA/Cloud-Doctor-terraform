@@ -17,10 +17,10 @@ class IAMRootMFACheck(BaseCheck):
                 ))
             else:
                 results.append(self.get_result(
-                    '양호', 'root', 'Root account MFA enabled'
+                    'PASS', 'root', 'Root account MFA enabled'
                 ))
         except Exception as e:
-            results.append(self.get_result('오류', 'root', str(e)))
+            results.append(self.get_result('ERROR', 'root', str(e)))
         
         return results
 
@@ -63,7 +63,7 @@ class IAMTrustPolicyWildcardCheck(BaseCheck):
                 
                 if has_wildcard_without_condition:
                     results.append(self.get_result(
-                        '취약', role_name,
+                        'FAIL', role_name,
                         f"역할 {role_name}의 신뢰 정책에 Principal이 '*'로 설정되어 있고 Condition이 없습니다. Trust Policy의 Principal: *를 제거하고, 사용할 계정/역할/서비스의 ARN만 명시해야 합니다.",
                         {
                             'role_name': role_name,
@@ -74,7 +74,7 @@ class IAMTrustPolicyWildcardCheck(BaseCheck):
                     ))
                 else:
                     results.append(self.get_result(
-                        '양호', role_name,
+                        'PASS', role_name,
                         f"역할 {role_name}의 신뢰 정책이 적절히 구성되어 있습니다.",
                         {
                             'role_name': role_name,
@@ -204,7 +204,7 @@ class IAMPassRoleWildcardResourceCheck(BaseCheck):
                 if passrole_resources:
                     if has_wildcard_passrole:
                         results.append(self.get_result(
-                            '취약', f"{entity_type}:{entity_name}",
+                            'FAIL', f"{entity_type}:{entity_name}",
                             f"{entity_type} {entity_name}의 정책 {policy_name}에서 iam:PassRole의 Resource가 '*' 또는 광범위하게 설정되어 있습니다.",
                             {
                                 'entity_type': entity_type,
@@ -216,7 +216,7 @@ class IAMPassRoleWildcardResourceCheck(BaseCheck):
                         ))
                     else:
                         results.append(self.get_result(
-                            '양호', f"{entity_type}:{entity_name}",
+                            'PASS', f"{entity_type}:{entity_name}",
                             f"{entity_type} {entity_name}의 정책 {policy_name}에서 iam:PassRole의 Resource가 적절히 제한되어 있습니다.",
                             {
                                 'entity_type': entity_type,
@@ -228,7 +228,7 @@ class IAMPassRoleWildcardResourceCheck(BaseCheck):
                         ))
                 
         except Exception as e:
-            results.append(self.get_result('오류', 'N/A', str(e)))
+            results.append(self.get_result('ERROR', 'N/A', str(e)))
         
         return {'results': results, 'raw': raw, 'guideline_id': 14}
     
@@ -287,7 +287,7 @@ class IAMIdPAssumeRoleCheck(BaseCheck):
                     
                     if has_idp_issue:
                         results.append(self.get_result(
-                            '취약', role_name,
+                            'FAIL', role_name,
                             f"역할 {role_name}의 IdP 연동 설정에서 Principal이 특정 IdP ARN으로 제한되지 않거나 Condition이 IdP 속성으로 제한되지 않았습니다.",
                             {
                                 'role_name': role_name,
@@ -298,7 +298,7 @@ class IAMIdPAssumeRoleCheck(BaseCheck):
                         ))
                     else:
                         results.append(self.get_result(
-                            '양호', role_name,
+                            'PASS', role_name,
                             f"역할 {role_name}의 IdP 연동 설정이 적절히 구성되어 있습니다.",
                             {
                                 'role_name': role_name,
@@ -309,7 +309,7 @@ class IAMIdPAssumeRoleCheck(BaseCheck):
                         ))
                         
         except Exception as e:
-            results.append(self.get_result('오류', 'N/A', str(e)))
+            results.append(self.get_result('ERROR', 'N/A', str(e)))
         
         return {'results': results, 'raw': raw, 'guideline_id': 15}
 
@@ -371,7 +371,7 @@ class IAMCrossAccountAssumeRoleCheck(BaseCheck):
                     
                     if has_cross_account_issue:
                         results.append(self.get_result(
-                            '취약', role_name,
+                            'FAIL', role_name,
                             f"역할 {role_name}의 Cross-Account 설정에서 Principal이 특정 ARN으로 제한되지 않거나 sts:ExternalId 조건이 없습니다.",
                             {
                                 'role_name': role_name,
@@ -382,7 +382,7 @@ class IAMCrossAccountAssumeRoleCheck(BaseCheck):
                         ))
                     else:
                         results.append(self.get_result(
-                            '양호', role_name,
+                            'PASS', role_name,
                             f"역할 {role_name}의 Cross-Account 설정이 적절히 구성되어 있습니다.",
                             {
                                 'role_name': role_name,
@@ -393,7 +393,7 @@ class IAMCrossAccountAssumeRoleCheck(BaseCheck):
                         ))
                         
         except Exception as e:
-            results.append(self.get_result('오류', 'N/A', str(e)))
+            results.append(self.get_result('ERROR', 'N/A', str(e)))
         
         return {'results': results, 'raw': raw, 'guideline_id': 16}
 
@@ -436,7 +436,7 @@ class IAMAccessKeyAgeCheck(BaseCheck):
                         ))
                     else:
                         results.append(self.get_result(
-                            '양호',
+                            'PASS',
                             access_key_id,
                             f"사용자 {username}의 액세스 키는 {key_age}일 전에 생성되었습니다.",
                             {
@@ -446,7 +446,7 @@ class IAMAccessKeyAgeCheck(BaseCheck):
                             }
                         ))
         except Exception as e:
-            results.append(self.get_result('오류', 'N/A', str(e)))
+            results.append(self.get_result('ERROR', 'N/A', str(e)))
         
         return {'results': results, 'raw': raw, 'guideline_id': 13}
 
@@ -468,7 +468,7 @@ class IAMRootAccessKeyCheck(BaseCheck):
             
             if root_keys > 0:
                 results.append(self.get_result(
-                    '취약', 'root',
+                    'FAIL', 'root',
                     f"Root 계정에 {root_keys}개의 액세스 키가 있습니다. 보안상 Root 계정의 액세스 키는 삭제해야 합니다.",
                     {
                         'key_count': root_keys,
@@ -477,7 +477,7 @@ class IAMRootAccessKeyCheck(BaseCheck):
                 ))
             else:
                 results.append(self.get_result(
-                    '양호', 'root',
+                    'PASS', 'root',
                     "Root 계정에 액세스 키가 없습니다."
                 ))
         except Exception as e:
@@ -532,7 +532,7 @@ class IAMMFACheck(BaseCheck):
             # Root 계정 MFA 미활성화
             if root_mfa_enabled == 0:
                 results.append(self.get_result(
-                    '취약', 'root',
+                    'FAIL', 'root',
                     "Root 계정에 MFA가 활성화되지 않았습니다. 루트를 포함한 모든 사용자 계정에 MFA가 설정되어야 합니다.",
                     {
                         'mfa_enabled': False,
@@ -541,7 +541,7 @@ class IAMMFACheck(BaseCheck):
                 ))
             else:
                 results.append(self.get_result(
-                    '양호', 'root',
+                    'PASS', 'root',
                     "Root 계정에 MFA가 활성화되어 있습니다.",
                     {
                         'mfa_enabled': True,
@@ -552,7 +552,7 @@ class IAMMFACheck(BaseCheck):
             # IAM 사용자 MFA 확인
             if users_without_mfa:
                 results.append(self.get_result(
-                    '취약', 'iam_users',
+                    'FAIL', 'iam_users',
                     f"다음 IAM 사용자에 MFA가 설정되지 않았습니다: {', '.join(users_without_mfa)}. 모든 사용자 계정에 MFA가 설정되어야 합니다.",
                     {
                         'users_without_mfa': users_without_mfa,
@@ -562,7 +562,7 @@ class IAMMFACheck(BaseCheck):
                 ))
             elif len(users) > 0:
                 results.append(self.get_result(
-                    '통과', 'iam_users',
+                    'PASS', 'iam_users',
                     f"모든 IAM 사용자에 MFA가 설정되어 있습니다.",
                     {
                         'users_with_mfa_count': len(users_with_mfa),

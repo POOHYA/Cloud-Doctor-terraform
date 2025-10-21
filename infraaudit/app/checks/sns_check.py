@@ -14,7 +14,7 @@ class SNSAccessPolicyCheck(BaseCheck):
             
             if not topics['Topics']:
                 results.append(self.get_result(
-                    '양호', 'N/A',
+                    'PASS', 'N/A',
                     "SNS 주제가 존재하지 않습니다."
                 ))
                 return {'results': results, 'raw': raw, 'guideline_id': 29}
@@ -28,7 +28,7 @@ class SNSAccessPolicyCheck(BaseCheck):
                     
                     if not policy_str:
                         results.append(self.get_result(
-                            '양호', topic_arn,
+                            'PASS', topic_arn,
                             f"주제 {topic_arn}에 액세스 정책이 설정되지 않았습니다.",
                             {'policy': None}
                         ))
@@ -69,7 +69,7 @@ class SNSAccessPolicyCheck(BaseCheck):
                     
                     if vulnerable:
                         results.append(self.get_result(
-                            '취약', topic_arn,
+                            'FAIL', topic_arn,
                             f"주제 {topic_arn}의 액세스 정책에서 과도한 권한이 설정되어 있습니다: {', '.join(issues)}. SNS 주제 액세스 정책에서 sns:Publish, sns:Subscribe 등의 SNS 관련 권한을 Principal은 특정 계정/역할/사용자 ARN으로 고정하고, Resource는 해당 주제의 ARN으로 고정해야 합니다.",
                             {
                                 'policy': policy,
@@ -78,7 +78,7 @@ class SNSAccessPolicyCheck(BaseCheck):
                         ))
                     else:
                         results.append(self.get_result(
-                            '양호', topic_arn,
+                            'PASS', topic_arn,
                             f"주제 {topic_arn}의 액세스 정책이 적절히 제한되어 있습니다.",
                             {'policy': policy}
                         ))

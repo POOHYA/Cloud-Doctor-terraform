@@ -1,6 +1,7 @@
 from .base_check import BaseCheck
 from datetime import datetime
 from typing import List, Dict
+import json
 
 class ElasticBeanstalkCredentialsCheck(BaseCheck):
     async def check(self) -> List[Dict]:
@@ -63,8 +64,8 @@ class ElasticBeanstalkCredentialsCheck(BaseCheck):
                             
                             if vulnerable_keys:
                                 results.append(self.get_result(
-                                    '취약', f"{app_name}/{env_name}",
-                                    f"Elastic Beanstalk 환경 {env_name}의 환경 속성에 민감한 정보가 평문으로 저장되어 있습니다: {', '.join(vulnerable_keys)}",
+                                    'FAIL', f"{app_name}/{env_name}",
+                                    f"Elastic Beanstalk 환경 {env_name}의 환경 속성에 민감한 정보가 평문으로 저장되어 있습니다: {', '.join(vulnerable_keys)}, 환경 생성 시, 환경 속성 속 민감 정보는 Secrets Manager나 SSM Parameter Store로 사용하세요.",
                                     {
                                         'app_name': app_name,
                                         'env_name': env_name,
@@ -75,7 +76,7 @@ class ElasticBeanstalkCredentialsCheck(BaseCheck):
                                 ))
                             else:
                                 results.append(self.get_result(
-                                    '양호', f"{app_name}/{env_name}",
+                                    'PASS', f"{app_name}/{env_name}",
                                     f"Elastic Beanstalk 환경 {env_name}의 환경 속성에 민감한 정보가 발견되지 않았습니다.",
                                     {
                                         'app_name': app_name,

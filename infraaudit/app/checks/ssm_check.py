@@ -86,7 +86,7 @@ class IAMSSMCommandPolicyCheck(BaseCheck):
                     
                     if vulnerable:
                         results.append(self.get_result(
-                            '취약', policy_name,
+                            'FAIL', policy_name,
                             f"정책 {policy_name}에서 ssm:SendCommand 권한이 과도하게 허용되어 있습니다: {', '.join(issues)}",
                             {
                                 'policy_name': policy_name,
@@ -104,7 +104,7 @@ class IAMSSMCommandPolicyCheck(BaseCheck):
                         
                         if has_ssm_command:
                             results.append(self.get_result(
-                                '양호', policy_name,
+                                'PASS', policy_name,
                                 f"정책 {policy_name}의 ssm:SendCommand 권한이 적절히 제한되어 있습니다.",
                                 {
                                     'policy_name': policy_name,

@@ -64,7 +64,7 @@ class OpenSearchSecurityCheck(BaseCheck):
                     
                     if vulnerable:
                         results.append(self.get_result(
-                            '취약', domain_name,
+                            'FAIL', domain_name,
                             f"OpenSearch 도메인 {domain_name}에서 보안 위험이 발견되었습니다: {', '.join(issues)}",
                             {
                                 'domain_name': domain_name,
@@ -76,7 +76,7 @@ class OpenSearchSecurityCheck(BaseCheck):
                         ))
                     else:
                         results.append(self.get_result(
-                            '양호', domain_name,
+                            'PASS', domain_name,
                             f"OpenSearch 도메인 {domain_name}의 네트워크 및 액세스 정책이 적절히 설정되어 있습니다.",
                             {
                                 'domain_name': domain_name,

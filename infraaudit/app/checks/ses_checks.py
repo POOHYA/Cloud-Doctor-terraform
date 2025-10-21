@@ -1,3 +1,4 @@
+import json
 from .base_check import BaseCheck
 from typing import List, Dict
 
@@ -8,9 +9,10 @@ class SESOverlyPermissiveCheck(BaseCheck):
                  Resource:"*"로 광범위하게 허용되어 있으면 취약
     """
 
-    def _find_vulnerable_statements(self, policy_document: Dict) -> List[Dict]:
-        """정책 문서에서 취약한 SES 관련 Allow 문장을 찾습니다."""
+    def _analyze_ses_statements(self, policy_document: Dict) -> tuple:
+        """정책 문서에서 SES 관련 문장을 분석하여 취약한 것과 안전한 것을 구분합니다."""
         vulnerable_statements = []
+        safe_statements = []
         
         DANGEROUS_SES_ACTIONS = {
             'ses:*', 'ses:SendEmail', 'ses:SendRawEmail', 
@@ -21,7 +23,7 @@ class SESOverlyPermissiveCheck(BaseCheck):
         }
 
         if not policy_document or 'Statement' not in policy_document:
-            return []
+            return [], []
             
         for stmt in policy_document.get('Statement', []):
             if stmt.get('Effect') != 'Allow':
@@ -43,14 +45,16 @@ class SESOverlyPermissiveCheck(BaseCheck):
                 
                 if is_resource_vulnerable:
                     vulnerable_statements.append(stmt)
+                else:
+                    # 구체적인 ARN이 지정된 경우 안전한 것으로 분류
+                    safe_statements.append(stmt)
                     
-        return vulnerable_statements
+        return vulnerable_statements, safe_statements
 
     async def check(self) -> Dict:
         iam = self.session.client('iam')
         results = []
         raw = []
-        vulnerable_principals = set()
 
         try:
             user_paginator = iam.get_paginator('list_users')
@@ -65,13 +69,18 @@ class SESOverlyPermissiveCheck(BaseCheck):
                         policy_doc = response['PolicyDocument']
                         raw.append({"principal_arn": user_arn, "policy_name": policy_name, "policy_type": "inline", "document": policy_doc})
                         
-                        vuln_stmts = self._find_vulnerable_statements(policy_doc)
+                        vuln_stmts, safe_stmts = self._analyze_ses_statements(policy_doc)
                         if vuln_stmts:
-                            vulnerable_principals.add(user_arn)
                             results.append(self.get_result(
                                 'FAIL', user_name,
-                                f"사용자 [{user_name}]의 인라인 정책 [{policy_name}]에 과도한 SES 권한이 있습니다.",
+                                f"사용자 [{user_name}]의 인라인 정책 [{policy_name}]에 과도한 SES 권한이 있습니다. SES를 위한 IAM 역할 정책 속 Resource를 구체적인 ARN, 도메인, 아이덴티티로 제한하세요.",
                                 {"principal_arn": user_arn, "policy_name": policy_name, "vulnerable_statements": vuln_stmts}
+                            ))
+                        elif safe_stmts:
+                            results.append(self.get_result(
+                                'PASS', user_name,
+                                f"사용자 [{user_name}]의 인라인 정책 [{policy_name}]에서 SES 권한이 구체적인 ARN으로 제한되어 있습니다.",
+                                {"principal_arn": user_arn, "policy_name": policy_name, "safe_statements": safe_stmts}
                             ))
 
                     attached_policies = iam.list_attached_user_policies(UserName=user_name).get('AttachedPolicies', [])
@@ -86,13 +95,18 @@ class SESOverlyPermissiveCheck(BaseCheck):
                         policy_doc = policy_version['PolicyVersion']['Document']
                         raw.append({"principal_arn": user_arn, "policy_arn": policy_arn, "policy_type": "attached", "document": policy_doc})
 
-                        vuln_stmts = self._find_vulnerable_statements(policy_doc)
+                        vuln_stmts, safe_stmts = self._analyze_ses_statements(policy_doc)
                         if vuln_stmts:
-                            vulnerable_principals.add(user_arn)
                             results.append(self.get_result(
                                 'FAIL', user_name,
-                                f"사용자 [{user_name}]에 연결된 정책 [{policy_arn}]에 과도한 SES 권한이 있습니다.",
+                                f"사용자 [{user_name}]에 연결된 정책 [{policy_arn}]에 과도한 SES 권한이 있습니다. SES를 위한 IAM 역할 정책 속 Resource를 구체적인 ARN, 도메인, 아이덴티티로 제한해야 합니다.",
                                 {"principal_arn": user_arn, "policy_arn": policy_arn, "vulnerable_statements": vuln_stmts}
+                            ))
+                        elif safe_stmts:
+                            results.append(self.get_result(
+                                'PASS', user_name,
+                                f"사용자 [{user_name}]에 연결된 정책 [{policy_arn}]에서 SES 권한이 구체적인 ARN으로 제한되어 있습니다.",
+                                {"principal_arn": user_arn, "policy_arn": policy_arn, "safe_statements": safe_stmts}
                             ))
 
             role_paginator = iam.get_paginator('list_roles')
@@ -107,13 +121,18 @@ class SESOverlyPermissiveCheck(BaseCheck):
                         policy_doc = response['PolicyDocument']
                         raw.append({"principal_arn": role_arn, "policy_name": policy_name, "policy_type": "inline", "document": policy_doc})
 
-                        vuln_stmts = self._find_vulnerable_statements(policy_doc)
+                        vuln_stmts, safe_stmts = self._analyze_ses_statements(policy_doc)
                         if vuln_stmts:
-                            vulnerable_principals.add(role_arn)
                             results.append(self.get_result(
                                 'FAIL', role_name,
-                                f"역할 [{role_name}]의 인라인 정책 [{policy_name}]에 과도한 SES 권한이 있습니다.",
+                                f"역할 [{role_name}]의 인라인 정책 [{policy_name}]에 과도한 SES 권한이 있습니다. SES를 위한 IAM 역할 정책 속 Resource를 구체적인 ARN, 도메인, 아이덴티티로 제한하세요.",
                                 {"principal_arn": role_arn, "policy_name": policy_name, "vulnerable_statements": vuln_stmts}
+                            ))
+                        elif safe_stmts:
+                            results.append(self.get_result(
+                                'PASS', role_name,
+                                f"역할 [{role_name}]의 인라인 정책 [{policy_name}]에서 SES 권한이 구체적인 ARN으로 제한되어 있습니다.",
+                                {"principal_arn": role_arn, "policy_name": policy_name, "safe_statements": safe_stmts}
                             ))
                     
                     attached_policies = iam.list_attached_role_policies(RoleName=role_name).get('AttachedPolicies', [])
@@ -128,19 +147,24 @@ class SESOverlyPermissiveCheck(BaseCheck):
                         policy_doc = policy_version['PolicyVersion']['Document']
                         raw.append({"principal_arn": role_arn, "policy_arn": policy_arn, "policy_type": "attached", "document": policy_doc})
 
-                        vuln_stmts = self._find_vulnerable_statements(policy_doc)
+                        vuln_stmts, safe_stmts = self._analyze_ses_statements(policy_doc)
                         if vuln_stmts:
-                            vulnerable_principals.add(role_arn)
                             results.append(self.get_result(
                                 'FAIL', role_name,
-                                f"역할 [{role_name}]에 연결된 정책 [{policy_arn}]에 과도한 SES 권한이 있습니다.",
+                                f"역할 [{role_name}]에 연결된 정책 [{policy_arn}]에 과도한 SES 권한이 있습니다. SES를 위한 IAM 역할 정책 속 Resource를 구체적인 ARN, 도메인, 아이덴티티로 제한하세요.",
                                 {"principal_arn": role_arn, "policy_arn": policy_arn, "vulnerable_statements": vuln_stmts}
                             ))
+                        elif safe_stmts:
+                            results.append(self.get_result(
+                                'PASS', role_name,
+                                f"역할 [{role_name}]에 연결된 정책 [{policy_arn}]에서 SES 권한이 구체적인 ARN으로 제한되어 있습니다.",
+                                {"principal_arn": role_arn, "policy_arn": policy_arn, "safe_statements": safe_stmts}
+                            ))
 
-            if not vulnerable_principals:
+            if not results:
                 results.append(self.get_result(
                     'PASS', 'N/A',
-                    "과도한 SES 권한(Resource: '*')을 가진 사용자나 역할이 없습니다."
+                    "SES 관련 권한을 가진 사용자나 역할이 없습니다."
                 ))
 
         except Exception as e:
