@@ -39,8 +39,9 @@ jobs:
 
       # 4️⃣ Docker 이미지 TAR 저장
       - name: Save Docker image to tar
-        working-directory: backend/CloudDoctorWeb
-        run: docker save cloud-doctor-backend -o cloud-doctor-backend.tar
+        run: |
+          docker save cloud-doctor-backend -o cloud-doctor-backend.tar
+          chmod 644 cloud-doctor-backend.tar
 
       # 5️⃣ Bastion 서버로 이미지 업로드
       - name: Copy Docker image to Bastion
@@ -49,7 +50,7 @@ jobs:
           host: ${{ secrets.BASTION_PUBLIC_IP }}
           username: ubuntu
           key: ${{ secrets.BASTION_SSH_KEY }}
-          source: "backend/CloudDoctorWeb/cloud-doctor-backend.tar"
+          source: "cloud-doctor-backend.tar"
           target: "/home/ubuntu/"
 
       # 6️⃣ Bastion에서 Private EC2로 전송 및 배포
