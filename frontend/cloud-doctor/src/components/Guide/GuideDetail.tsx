@@ -1,20 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { userApi } from "../../api/user";
-
-type ApiResponse = {
-  id: number;
-  title: string;
-  serviceList: { displayName: string }[];
-  importanceLevel: "LOW" | "MEDIUM" | "HIGH";
-  whyDangerous: string;
-  whatHappens: string;
-  checkStandard: string;
-  solutionText: string;
-  sideEffects: string;
-  note: string;
-};
 
 export type GuideItemProps = {
   id: string;
@@ -300,7 +287,8 @@ const GuideItem: React.FC<{ data: GuideItemProps }> = ({ data }) => {
 };
 
 export default function GuideDetail() {
-  const { service } = useParams<{ service: string }>();
+  const { service, id } = useParams<{ service: string; id?: string }>();
+  const location = useLocation();
   const [articles, setArticles] = useState<GuideItemProps[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -317,6 +305,7 @@ export default function GuideDetail() {
         const servicesData = await userApi.getServicesByProvider(1);
         console.log("Services:", servicesData);
         console.log("Looking for service:", service);
+        console.log("URL id param:", id);
 
         const targetService = servicesData.find((s: any) => s.name === service);
         console.log("Target service:", targetService);
@@ -344,6 +333,7 @@ export default function GuideDetail() {
           mapApiToGuideItem(g, targetService.displayName)
         );
         console.log("Mapped articles:", mapped);
+        console.log("Article IDs:", mapped.map((a: any) => a.id));
         setArticles(mapped);
       } catch (error) {
         console.error("데이터 불러오기 실패:", error);
@@ -353,22 +343,34 @@ export default function GuideDetail() {
       }
     };
     fetchData();
-  }, [service]);
+  }, [service, id]);
 
   const categories = Array.from(new Set(articles.map((a) => a.category)));
-  const filteredArticles = selectedCategory
+  const filteredArticles = id
+    ? articles.filter((a) => String(a.id) === String(id))
+    : selectedCategory
     ? articles.filter((a) => a.category === selectedCategory)
     : articles;
+  
+  console.log("Filter - id param:", id);
+  console.log("Filter - all articles:", articles.length);
+  console.log("Filter - filtered articles:", filteredArticles.length);
+  console.log("Filter - filtered IDs:", filteredArticles.map(a => a.id));
 
-  const scrollToArticle = (index: number) => {
-    const element = document.getElementById(`article-${index}`);
-    if (element) {
-      const yOffset = -100;
-      const y =
-        element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      window.scrollTo({ top: y, behavior: "smooth" });
-    }
+  const scrollToArticle = (index: number, articleId: string) => {
+    window.location.hash = articleId;
+    setTimeout(() => {
+      const element = document.getElementById(`article-${index}`);
+      if (element) {
+        const yOffset = -100;
+        const y =
+          element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
+    }, 100);
   };
+
+
 
   if (loading) {
     return (
@@ -378,11 +380,19 @@ export default function GuideDetail() {
     );
   }
 
-  if (articles.length === 0) {
+  if (filteredArticles.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-8 flex items-center justify-center">
-        <div className="text-white text-xl">
-          해당 서비스의 가이드가 준비 중입니다.
+        <div className="text-white text-xl space-y-4">
+          <div>해당 서비스의 가이드가 준비 중입니다.</div>
+          <div className="text-sm bg-red-900/50 p-4 rounded">
+            <div>DEBUG INFO:</div>
+            <div>Service: {service}</div>
+            <div>ID param: {id || 'none'}</div>
+            <div>Total articles: {articles.length}</div>
+            <div>Article IDs: {articles.map(a => a.id).join(', ')}</div>
+            <div>Looking for ID: {id}</div>
+          </div>
         </div>
       </div>
     );
@@ -391,15 +401,15 @@ export default function GuideDetail() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-8">
       <div className="flex gap-8 max-w-7xl mx-auto p-8">
-        {/* 왼쪽 목차 - 고정 */}
-        <aside className="hidden md:block w-64 flex-shrink-0">
+        {!id && (
+          <aside className="hidden md:block w-64 flex-shrink-0">
           <div className="sticky top-24 bg-slate-800/80 backdrop-blur-xl rounded-2xl shadow-lg p-6 border border-slate-700">
             <h3 className="text-lg font-bold text-cyan-400 mb-4">📑 목차</h3>
             <nav className="space-y-2">
               {filteredArticles.map((article, index) => (
                 <button
                   key={article.id}
-                  onClick={() => scrollToArticle(index)}
+                  onClick={() => scrollToArticle(index, article.id)}
                   className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-700/50 transition-colors text-sm text-slate-300 hover:text-cyan-400 font-medium"
                 >
                   {index + 1}. {article.title}
@@ -407,12 +417,12 @@ export default function GuideDetail() {
               ))}
             </nav>
           </div>
-        </aside>
+          </aside>
+        )}
 
         {/* 오른쪽 아티클 영역 */}
         <div className="flex-1 space-y-12">
-          {/* 카테고리 필터 */}
-          {categories.length > 1 && (
+          {!id && categories.length > 1 && (
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => setSelectedCategory(null)}

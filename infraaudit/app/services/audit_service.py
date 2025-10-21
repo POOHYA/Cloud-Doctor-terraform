@@ -2,12 +2,12 @@ import uuid
 from datetime import datetime
 from typing import Dict, List
 from app.core.aws_client import AWSClientManager
-from app.checks.base_check import BaseCheck
-from app.checks.iam_checks import IAMRootMFACheck, IAMTrustPolicyWildcardCheck, IAMPassRoleWildcardResourceCheck, IAMIdPAssumeRoleCheck, IAMCrossAccountAssumeRoleCheck, IAMAccessKeyAgeCheck, IAMRootAccessKeyCheck, IAMMFACheck
-from app.checks.s3_checks import S3BucketPolicyPublicActionsCheck, S3PublicAccessCheck, S3EncryptionCheck
 from app.checks.ec2_checks import EC2IMDSv2Check, EC2PublicIPCheck, EC2AMIPrivateCheck, EBSSnapshotPrivateCheck
 from app.checks.eks_checks import EKSIRSARoleCheck
 from app.checks.kms_checks import KMSImportedKeyMaterialCheck
+from app.checks.base_check import BaseCheck
+from app.checks.iam_checks import IAMRootMFACheck, IAMTrustPolicyWildcardCheck, IAMPassRoleWildcardResourceCheck, IAMIdPAssumeRoleCheck, IAMCrossAccountAssumeRoleCheck, IAMAccessKeyAgeCheck, IAMRootAccessKeyCheck, IAMMFACheck
+from app.checks.s3_checks import S3PublicAccessAndPolicyCheck, S3ACLCheck, S3ReplicationRuleCheck 
 from app.checks.cloudformation_check import IAMRoleCloudFormationPassRoleCheck
 from app.checks.cloudtrail_check import CloudTrailManagementEventsCheck, CloudTrailLoggingCheck
 from app.checks.cognito_check import CognitoTokenExpirationCheck
@@ -20,7 +20,6 @@ from app.checks.rds_check import RDSPublicAccessibilityCheck
 from app.checks.sns_check import SNSAccessPolicyCheck
 from app.checks.sqs_check import SQSAccessPolicyCheck
 from app.checks.ssm_check import IAMSSMCommandPolicyCheck
-from app.checks.s3_checks import S3BucketPolicyPublicActionsCheck
 from app.checks.bedrock_checks import BedrockModelAccessCheck
 from app.checks.appstream_checks import AppStreamOverlyPermissiveCheck
 from app.checks.ses_checks import SESOverlyPermissiveCheck
@@ -31,39 +30,39 @@ class AuditService:
         self.audits: Dict[str, Dict] = {}
         
         self.check_registry = {
-            'iam_root_mfa': IAMRootMFACheck,
-            'iam_trust_policy_wildcard': IAMTrustPolicyWildcardCheck,
-            'iam_pass_role_wildcard_resource': IAMPassRoleWildcardResourceCheck,
-            'iam_idp_assume_role': IAMIdPAssumeRoleCheck,
-            'iam_cross_account_assume_role': IAMCrossAccountAssumeRoleCheck,
-            'iam_access_key_age': IAMAccessKeyAgeCheck,
-            'iam_root_access_key': IAMRootAccessKeyCheck,
-            'iam_mfa': IAMMFACheck,
-            's3_public_access': S3PublicAccessCheck,
-            's3_encryption': S3EncryptionCheck,
-            's3_bucket_policy_public_actions': S3BucketPolicyPublicActionsCheck,
-            'ec2_imdsv2': EC2IMDSv2Check,
-            'ec2_public_ip': EC2PublicIPCheck,
-            'ec2_ami_private': EC2AMIPrivateCheck,
-            'ebs_snapshot_private': EBSSnapshotPrivateCheck,
-            'eks_irsarole': EKSIRSARoleCheck,
-            'kms_key_rotation': KMSImportedKeyMaterialCheck,
-            'cloudformation_iam_role_pass': IAMRoleCloudFormationPassRoleCheck,
-            'cloudtrail_management_events': CloudTrailManagementEventsCheck, 
-            'cloudtrail_logging': CloudTrailLoggingCheck,
-            'cognito_token_expiration': CognitoTokenExpirationCheck,
-            'elasticbeanstalk_credentials': ElasticBeanstalkCredentialsCheck,
-            'glue_iam_pass_role': IAMGluePassRoleCheck,
-            'guardduty_status': GuardDutyStatusCheck,
-            'opensearch_security': OpenSearchSecurityCheck,
-            'organizations_scp': OrganizationsSCPCheck,
-            'rds_public_access': RDSPublicAccessibilityCheck,
-            'sns_access_policy': SNSAccessPolicyCheck,
-            'sqs_access_policy': SQSAccessPolicyCheck,
-            'ses_overly_permissive': SESOverlyPermissiveCheck,
-            'ssm_command_policy': IAMSSMCommandPolicyCheck,
-            'bedrock_model_access': BedrockModelAccessCheck,
-            'appstream_overly_permissive': AppStreamOverlyPermissiveCheck,
+            'IAMRootMFACheck': IAMRootMFACheck,
+            'IAMTrustPolicyWildcardCheck': IAMTrustPolicyWildcardCheck,
+            'IAMPassRoleWildcardResourceCheck': IAMPassRoleWildcardResourceCheck,
+            'IAMIdPAssumeRoleCheck': IAMIdPAssumeRoleCheck,
+            'IAMCrossAccountAssumeRoleCheck': IAMCrossAccountAssumeRoleCheck,
+            'IAMAccessKeyAgeCheck': IAMAccessKeyAgeCheck,
+            'IAMRootAccessKeyCheck': IAMRootAccessKeyCheck,
+            'IAMMFACheck': IAMMFACheck,
+            'S3PublicAccessAndPolicyCheck': S3PublicAccessAndPolicyCheck,
+            'S3ACLCheck': S3ACLCheck,
+            'S3ReplicationRuleCheck': S3ReplicationRuleCheck,
+            'EC2IMDSv2Check': EC2IMDSv2Check,
+            'EC2PublicIPCheck': EC2PublicIPCheck,
+            'EC2AMIPrivateCheck': EC2AMIPrivateCheck,
+            'EBSSnapshotPrivateCheck': EBSSnapshotPrivateCheck,
+            'EKSIRSARoleCheck': EKSIRSARoleCheck,
+            'KMSImportedKeyMaterialCheck': KMSImportedKeyMaterialCheck,
+            'IAMRoleCloudFormationPassRoleCheck': IAMRoleCloudFormationPassRoleCheck,
+            'CloudTrailManagementEventsCheck': CloudTrailManagementEventsCheck, 
+            'CloudTrailLoggingCheck': CloudTrailLoggingCheck,
+            'CognitoTokenExpirationCheck': CognitoTokenExpirationCheck,
+            'ElasticBeanstalkCredentialsCheck': ElasticBeanstalkCredentialsCheck,
+            'IAMGluePassRoleCheck': IAMGluePassRoleCheck,
+            'GuardDutyStatusCheck': GuardDutyStatusCheck,
+            'OpenSearchSecurityCheck': OpenSearchSecurityCheck,
+            'OrganizationsSCPCheck': OrganizationsSCPCheck,
+            'RDSPublicAccessibilityCheck': RDSPublicAccessibilityCheck,
+            'SNSAccessPolicyCheck': SNSAccessPolicyCheck,
+            'SQSAccessPolicyCheck': SQSAccessPolicyCheck,
+            'SESOverlyPermissiveCheck': SESOverlyPermissiveCheck,
+            'IAMSSMCommandPolicyCheck': IAMSSMCommandPolicyCheck,
+            'BedrockModelAccessCheck': BedrockModelAccessCheck,
+            'AppStreamOverlyPermissiveCheck': AppStreamOverlyPermissiveCheck,
         }
     
     async def run_audit(self, account_id: str, role_name: str, checks: List[str] = None, external_id: str = None) -> Dict:
@@ -86,12 +85,16 @@ class AuditService:
                     check_results = await check_instance.check()
                     
                     if isinstance(check_results, dict) and 'results' in check_results:
+                        for result in check_results['results']:
+                            result['check_id'] = check_name
                         results.extend(check_results['results'])
                         if 'raw' in check_results:
                             raw_data[check_name] = check_results['raw']
                         if 'guideline_id' in check_results:
                             guideline_ids[check_name] = check_results['guideline_id']
                     else:
+                        for result in check_results:
+                            result['check_id'] = check_name
                         results.extend(check_results)
             
             audit_data = {

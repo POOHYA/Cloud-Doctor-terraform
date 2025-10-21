@@ -26,7 +26,9 @@ export interface AuditResponse {
   completed_at?: string;
   results?: CheckResult[];
   raw?: Record<string, any[]>;
+  guideline_id?: number;
   guideline_ids?: Record<string, number>;
+
   summary?: {
     total: number;
     pass: number;
@@ -60,148 +62,121 @@ export const auditApi = {
 };
 
 export const AVAILABLE_CHECKS = [
-  { id: "ec2_imdsv2", name: "EC2 IMDSv2 강제", category: "EC2" },
-  { id: "ec2_public_ip", name: "EC2 퍼블릭 IP", category: "EC2" },
-  { id: "ec2_ami_private", name: "EC2 AMI 프라이빗 설정", category: "EC2" },
+  { id: "IAMRootMFACheck", name: "루트 계정 MFA", category: "IAM" },
   {
-    id: "ebs_snapshot_private",
-    name: "EBS 스냅샷 프라이빗 설정",
-    category: "EC2",
-  },
-
-  { id: "s3_public_access", name: "S3 퍼블릭 액세스 설정", category: "S3" },
-  { id: "s3_encryption", name: "S3 암호화 설정", category: "S3" },
-  {
-    id: "s3_bucket_policy_public_actions",
-    name: "S3 버킷 정책 퍼블릭 액션",
-    category: "S3",
-  },
-  {
-    id: "s3_replication_role",
-    name: "S3 복제 역할 권한 검증",
-    category: "S3",
-  },
-  {
-    id: "iam_access_key_age",
-    name: "IAM 액세스 키 수명 (90일)",
-    category: "IAM",
-  },
-  { id: "iam_root_access_key", name: "루트 계정 액세스 키", category: "IAM" },
-  {
-    id: "iam_trust_policy_wildcard",
+    id: "IAMTrustPolicyWildcardCheck",
     name: "IAM 신뢰 정책 와일드카드",
-    category: "IAM",
+    category: "iam",
   },
   {
-    id: "iam_pass_role_wildcard_resource",
+    id: "IAMPassRoleWildcardResourceCheck",
     name: "IAM PassRole 와일드카드 리소스",
-    category: "IAM",
+    category: "iam",
   },
-  { id: "iam_idp_assume_role", name: "IAM IdP 역할 위임", category: "IAM" },
+  { id: "IAMIdPAssumeRoleCheck", name: "IAM IdP 역할 위임", category: "iam" },
   {
-    id: "iam_cross_account_assume_role",
+    id: "IAMCrossAccountAssumeRoleCheck",
     name: "IAM 교차 계정 역할 위임",
-    category: "IAM",
+    category: "iam",
   },
-  { id: "iam_root_mfa", name: "루트 계정 MFA", category: "IAM" },
-  { id: "iam_mfa", name: "IAM 사용자 MFA", category: "IAM" },
   {
-    id: "sg_remote_access",
-    name: "Security Group SSH/RDP 접근 제한",
-    category: "VPC",
+    id: "IAMAccessKeyAgeCheck",
+    name: "IAM 액세스 키 수명 (90일)",
+    category: "iam",
   },
-  { id: "rds_snapshot_public", name: "RDS 스냅샷 공개 설정", category: "RDS" },
-  { id: "rds_public_access", name: "RDS 퍼룔릭 액세스 차단", category: "RDS" },
-  { id: "cloudtrail_logging", name: "CloudTrail 로깅", category: "CloudTrail" },
+  { id: "IAMRootAccessKeyCheck", name: "루트 계정 액세스 키", category: "iam" },
+  { id: "IAMMFACheck", name: "IAM 사용자 MFA", category: "iam" },
   {
-    id: "cloudtrail_management_events",
-    name: "CloudTrail 관리 이벤트 로깅",
-    category: "CloudTrail",
+    id: "S3PublicAccessAndPolicyCheck",
+    name: "S3 퍼블릭 액세스 설정",
+    category: "s3",
   },
-  { id: "eks_irsarole", name: "EKS IRSA 역할 권한 검증", category: "EKS" },
+  { id: "S3ACLCheck", name: "S3 버킷 ACL 설정", category: "s3" },
   {
-    id: "kms_key_rotation",
+    id: "S3ReplicationRuleCheck",
+    name: "S3 버킷 복제 규칙 설정",
+    category: "s3",
+  },
+  { id: "EC2IMDSv2Check", name: "EC2 IMDSv2 강제", category: "ec2" },
+  { id: "EC2PublicIPCheck", name: "EC2 퍼블릭 IP", category: "ec2" },
+  { id: "EC2AMIPrivateCheck", name: "EC2 AMI 프라이빗 설정", category: "ec2" },
+  {
+    id: "EBSSnapshotPrivateCheck",
+    name: "EBS 스냅샷 프라이빗 설정",
+    category: "ec2",
+  },
+  { id: "EKSIRSARoleCheck", name: "EKS IRSA 역할 권한 검증", category: "eks" },
+  {
+    id: "KMSImportedKeyMaterialCheck",
     name: "KMS 외부 키 구성 원본 검증",
-    category: "KMS",
-  },
-  { id: "sns_access_policy", name: "SNS 액세스 정책", category: "SNS" },
-  { id: "sns_topic_policy", name: "SNS 주제 액세스 정책", category: "SNS" },
-  { id: "sqs_access_policy", name: "SQS 액세스 정책", category: "SQS" },
-  {
-    id: "organizations_scp",
-    name: "Organizations SCP 정책",
-    category: "Organizations",
+    category: "kms",
   },
   {
-    id: "ecr_repository_security",
-    name: "ECR 리포지토리 보안",
-    category: "ECR",
-  },
-  { id: "ssm_command_policy", name: "SSM 명령 정책", category: "SSM" },
-  { id: "ssm_document_public", name: "SSM 문서 퍼블릭 권한", category: "SSM" },
-  {
-    id: "cognito_token_expiration",
-    name: "Cognito 토큰 만료 시간 검증",
-    category: "Cognito",
-  },
-  {
-    id: "cloudformation_iam_role_pass",
+    id: "IAMRoleCloudFormationPassRoleCheck",
     name: "CloudFormation IAM PassRole 검증",
-    category: "CloudFormation",
+    category: "cloudformation",
   },
   {
-    id: "opensearch_security",
-    name: "OpenSearch 보안 설정",
-    category: "OpenSearch",
+    id: "CloudTrailManagementEventsCheck",
+    name: "CloudTrail 관리 이벤트 로깅",
+    category: "cloudtrail",
   },
   {
-    id: "opensearch_vpc_access",
-    name: "OpenSearch VPC 액세스 전용",
-    category: "OpenSearch",
+    id: "CloudTrailLoggingCheck",
+    name: "CloudTrail 로깅",
+    category: "cloudtrail",
   },
   {
-    id: "elasticbeanstalk_credentials",
+    id: "CognitoTokenExpirationCheck",
+    name: "Cognito 토큰 만료 시간 검증",
+    category: "cognito",
+  },
+  {
+    id: "ElasticBeanstalkCredentialsCheck",
     name: "Elastic Beanstalk 자격증명 보안",
-    category: "ElasticBeanstalk",
+    category: "elasticbeanstalk",
   },
   {
-    id: "redshift_encryption",
-    name: "Redshift 클러스터 암호화",
-    category: "Redshift",
-  },
-  {
-    id: "glue_iam_pass_role",
+    id: "IAMGluePassRoleCheck",
     name: "Glue IAM PassRole 검증",
-    category: "Glue",
+    category: "glue",
   },
   {
-    id: "docdb_snapshot_private",
-    name: "DocumentDB 스냅샷 프라이빗 설정",
-    category: "DocumentDB",
-  },
-  {
-    id: "docdb_encryption",
-    name: "DocumentDB 클러스터 KMS 암호화",
-    category: "DocumentDB",
-  },
-  {
-    id: "guardduty_status",
+    id: "GuardDutyStatusCheck",
     name: "GuardDuty 활성화 상태",
-    category: "GuardDuty",
+    category: "guardduty",
   },
   {
-    id: "bedrock_model_access",
-    name: "Bedrock 모델 액세스",
-    category: "Bedrock",
+    id: "OpenSearchSecurityCheck",
+    name: "OpenSearch 보안 설정",
+    category: "opensearch",
   },
   {
-    id: "ses_overly_permissive",
+    id: "OrganizationsSCPCheck",
+    name: "Organizations SCP 정책",
+    category: "organizations",
+  },
+  {
+    id: "RDSPublicAccessibilityCheck",
+    name: "RDS 퍼룔릭 액세스 차단",
+    category: "rds",
+  },
+  { id: "SNSAccessPolicyCheck", name: "SNS 액세스 정책", category: "SNS" },
+  { id: "SQSAccessPolicyCheck", name: "SQS 액세스 정책", category: "SQS" },
+  {
+    id: "SESOverlyPermissiveCheck",
     name: "SES 과도한 권한 설정",
-    category: "SES",
+    category: "ses",
+  },
+  { id: "IAMSSMCommandPolicyCheck", name: "SSM 명령 정책", category: "SSM" },
+  {
+    id: "BedrockModelAccessCheck",
+    name: "Bedrock 모델 액세스",
+    category: "bedrock",
   },
   {
-    id: "appstream_overly_permissive",
+    id: "AppStreamOverlyPermissiveCheck",
     name: "AppStream 과도한 권한 설정",
-    category: "AppStream",
+    category: "appstream2.0",
   },
 ];

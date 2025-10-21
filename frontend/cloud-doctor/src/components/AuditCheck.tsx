@@ -2,6 +2,42 @@ import { useState, useEffect } from "react";
 import { auditApi, AuditResponse, AVAILABLE_CHECKS } from "../api/audit";
 import { userApi } from "../api/user";
 
+const CHECK_TO_SERVICE: Record<string, string> = {
+  IAMRootMFACheck: "iam",
+  IAMTrustPolicyWildcardCheck: "iam",
+  IAMPassRoleWildcardResourceCheck: "iam",
+  IAMIdPAssumeRoleCheck: "iam",
+  IAMCrossAccountAssumeRoleCheck: "iam",
+  IAMAccessKeyAgeCheck: "iam",
+  IAMRootAccessKeyCheck: "iam",
+  IAMMFACheck: "iam",
+  S3PublicAccessCheck: "s3",
+  S3EncryptionCheck: "s3",
+  S3BucketPolicyPublicActionsCheck: "s3",
+  EC2IMDSv2Check: "ec2",
+  EC2PublicIPCheck: "ec2",
+  EC2AMIPrivateCheck: "ec2",
+  EBSSnapshotPrivateCheck: "ec2",
+  EKSIRSARoleCheck: "eks",
+  KMSImportedKeyMaterialCheck: "kms",
+  IAMRoleCloudFormationPassRoleCheck: "cloudformation",
+  CloudTrailManagementEventsCheck: "cloudtrail",
+  CloudTrailLoggingCheck: "cloudtrail",
+  CognitoTokenExpirationCheck: "cognito",
+  ElasticBeanstalkCredentialsCheck: "elasticbeanstalk",
+  IAMGluePassRoleCheck: "glue",
+  GuardDutyStatusCheck: "guardduty",
+  OpenSearchSecurityCheck: "opensearch",
+  OrganizationsSCPCheck: "organizations",
+  RDSPublicAccessibilityCheck: "rds",
+  SNSAccessPolicyCheck: "sns",
+  SQSAccessPolicyCheck: "sqs",
+  SESOverlyPermissiveCheck: "ses",
+  IAMSSMCommandPolicyCheck: "ssm",
+  BedrockModelAccessCheck: "bedrock",
+  AppStreamOverlyPermissiveCheck: "appstream2.0",
+};
+
 export default function AuditCheck() {
   const [accountId, setAccountId] = useState("");
   const [roleName, setRoleName] = useState("CloudDoctorAuditRole");
@@ -34,7 +70,6 @@ export default function AuditCheck() {
         : [...prev, checkId]
     );
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -48,6 +83,9 @@ export default function AuditCheck() {
         external_id: externalId || undefined,
         checks: selectedChecks.length > 0 ? selectedChecks : undefined,
       });
+      console.log("Backend response:", response);
+      console.log("guideline_ids:", response.guideline_ids);
+      console.log("First result check_id:", response.results?.[0]?.check_id);
       setResult(response);
     } catch (err: any) {
       setError(err.response?.data?.detail || err.message || "점검 실패");
@@ -203,12 +241,14 @@ export default function AuditCheck() {
                         : "bg-gray-500/10 border-gray-500"
                     } border`}
                   >
-                    <div className="flex justify-between items-start">
+                    <div className="flex justify-between items-start gap-4">
                       <div className="flex-1">
                         <div className="font-bold text-white">
                           {item.check_id}
                         </div>
-                        <div className="text-sm text-beige mt-1"></div>
+                        <div className="text-sm text-beige mt-1">
+                          {item.message}
+                        </div>
                         <div className="text-xs text-white/70 mt-1">
                           Resource: {item.resource_id}
                         </div>
@@ -223,17 +263,40 @@ export default function AuditCheck() {
                           </details>
                         )}
                       </div>
-                      <span
-                        className={`px-3 py-1 rounded text-sm font-bold ${
-                          item.status === "PASS"
-                            ? "bg-green-500 text-white"
-                            : item.status === "FAIL"
-                            ? "bg-red-500 text-white"
-                            : "bg-gray-500 text-white"
-                        }`}
-                      >
-                        {item.status}
-                      </span>
+                      <div className="flex flex-col items-end gap-2">
+                        <span
+                          className={`px-3 py-1 rounded text-sm font-bold ${
+                            item.status === "PASS"
+                              ? "bg-green-500 text-white"
+                              : item.status === "FAIL"
+                              ? "bg-red-500 text-white"
+                              : "bg-gray-500 text-white"
+                          }`}
+                        >
+                          {item.status}
+                        </span>
+                        {(item.status === "FAIL" || item.status === "WARN") &&
+                          result.guideline_ids?.[item.check_id] &&
+                          CHECK_TO_SERVICE[item.check_id] && (
+                            <button
+                              onClick={() => {
+                                const guidelineId =
+                                  result.guideline_ids?.[item.check_id];
+                                if (guidelineId) {
+                                  window.open(
+                                    `/guide/${
+                                      CHECK_TO_SERVICE[item.check_id]
+                                    }/${guidelineId}`,
+                                    "_blank"
+                                  );
+                                }
+                              }}
+                              className="px-3 py-1 rounded text-xs font-medium bg-beige/20 text-beige hover:bg-beige hover:text-primary-dark transition-colors cursor-pointer"
+                            >
+                              조치방안
+                            </button>
+                          )}
+                      </div>
                     </div>
                   </div>
                 ))}

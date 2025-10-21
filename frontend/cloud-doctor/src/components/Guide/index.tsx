@@ -86,6 +86,7 @@ export default function Guide() {
     <Routes>
       <Route index element={<Index />} />
       <Route path=":service" element={<GuideDetail />} />
+      <Route path=":service/:id" element={<GuideDetail />} />
     </Routes>
   );
 }

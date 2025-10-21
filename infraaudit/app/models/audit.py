@@ -23,4 +23,5 @@ class AuditResponse(BaseModel):
     completed_at: Optional[datetime] = None
     results: Optional[List[CheckResult]] = None
     summary: Optional[Dict] = None
+    guideline_ids: Optional[Dict[str, int]] = None
     error: Optional[str] = None
