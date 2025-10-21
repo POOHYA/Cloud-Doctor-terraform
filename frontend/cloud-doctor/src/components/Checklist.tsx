@@ -205,8 +205,8 @@ export default function Checklist() {
         </div>
 
         {/* 체크리스트 테이블 */}
-        <div className="bg-primary-dark/50 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-primary">
-          <table className="table-auto w-full border-collapse">
+        <div className="bg-primary-dark/50 backdrop-blur-xl rounded-3xl shadow-2xl p-4 md:p-8 border border-primary overflow-x-auto">
+          <table className="table-auto w-full border-collapse min-w-[600px]">
             <thead>
               <tr className="bg-primary-dark/50 text-primary-light">
                 <th className="border border-primary p-4 text-left font-semibold">
@@ -235,10 +235,10 @@ export default function Checklist() {
                       {item.title}
                     </td>
                     <td className="border border-primary p-4">
-                      <div className="flex justify-center gap-2">
+                      <div className="flex justify-center gap-1 md:gap-2">
                       {/* O 버튼 */}
                       <button
-                        className={`w-10 h-10 rounded-lg font-bold text-lg transition-all ${
+                        className={`w-8 h-8 md:w-10 md:h-10 rounded-lg font-bold text-sm md:text-lg transition-all ${
                           answer === true
                             ? "bg-gradient-to-br from-green-600 to-green-700 text-white shadow-lg scale-110"
                             : "bg-primary-dark/50 text-surface border-2 border-primary hover:border-green-500 hover:text-green-400 hover:scale-105"
@@ -251,7 +251,7 @@ export default function Checklist() {
                       </button>
                       {/* X 버튼 */}
                       <button
-                        className={`w-10 h-10 rounded-lg font-bold text-lg transition-all ${
+                        className={`w-8 h-8 md:w-10 md:h-10 rounded-lg font-bold text-sm md:text-lg transition-all ${
                           answer === false
                             ? "bg-gradient-to-br from-rose-600 to-red-600 text-white shadow-lg scale-110"
                             : "bg-slate-700/50 text-slate-400 border-2 border-slate-600 hover:border-rose-500 hover:text-rose-400 hover:scale-105"

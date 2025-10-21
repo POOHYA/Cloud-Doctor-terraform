@@ -31,9 +31,9 @@ const Header: React.FC = () => {
           <nav>
             <ul className="flex gap-6">
               <li>
-                <Link
-                  to="/about"
-                  className={`relative py-2 px-1 transition-all duration-300 group ${
+                <button
+                  onClick={() => navigate('/about')}
+                  className={`relative py-2 px-1 transition-all duration-300 group align-baseline inline-block ${
                     location.pathname === "/about"
                       ? "text-rose-400"
                       : "text-slate-300 hover:text-rose-400"
@@ -47,12 +47,12 @@ const Header: React.FC = () => {
                         : "scale-x-0 group-hover:scale-x-100"
                     }`}
                   ></span>
-                </Link>
+                </button>
               </li>
               <li>
-                <Link
-                  to="/guide"
-                  className={`relative py-2 px-1 transition-all duration-300 group ${
+                <button
+                  onClick={() => navigate('/guide')}
+                  className={`relative py-2 px-1 transition-all duration-300 group align-baseline inline-block ${
                     location.pathname === "/guide"
                       ? "text-cyan-400"
                       : "text-slate-300 hover:text-cyan-400"
@@ -66,12 +66,12 @@ const Header: React.FC = () => {
                         : "scale-x-0 group-hover:scale-x-100"
                     }`}
                   ></span>
-                </Link>
+                </button>
               </li>
               <li>
-                <Link
-                  to="/prowler"
-                  className={`relative py-2 px-1 transition-all duration-300 group ${
+                <button
+                  onClick={() => navigate('/prowler')}
+                  className={`relative py-2 px-1 transition-all duration-300 group align-baseline inline-block ${
                     location.pathname === "/prowler"
                       ? "text-emerald-400"
                       : "text-slate-300 hover:text-emerald-400"
@@ -85,12 +85,12 @@ const Header: React.FC = () => {
                         : "scale-x-0 group-hover:scale-x-100"
                     }`}
                   ></span>
-                </Link>
+                </button>
               </li>
               <li>
-                <Link
-                  to="/checklist"
-                  className={`relative py-2 px-1 transition-all duration-300 group ${
+                <button
+                  onClick={() => navigate('/checklist')}
+                  className={`relative py-2 px-1 transition-all duration-300 group align-baseline inline-block ${
                     location.pathname === "/checklist"
                       ? "text-violet-400"
                       : "text-slate-300 hover:text-violet-400"
@@ -104,12 +104,19 @@ const Header: React.FC = () => {
                         : "scale-x-0 group-hover:scale-x-100"
                     }`}
                   ></span>
-                </Link>
+                </button>
               </li>
               <li>
-                <Link
-                  to="/auditcheck"
-                  className={`relative py-2 px-1 transition-all duration-300 group ${
+                <button
+                  onClick={() => {
+                    if (isLoggedIn) {
+                      navigate('/auditcheck');
+                    } else {
+                      alert('로그인이 필요한 서비스입니다.');
+                      navigate('/login');
+                    }
+                  }}
+                  className={`relative py-2 px-1 transition-all duration-300 group align-baseline inline-block ${
                     location.pathname === "/auditcheck"
                       ? "text-amber-400"
                       : "text-slate-300 hover:text-amber-400"
@@ -123,7 +130,7 @@ const Header: React.FC = () => {
                         : "scale-x-0 group-hover:scale-x-100"
                     }`}
                   ></span>
-                </Link>
+                </button>
               </li>
             </ul>
           </nav>
@@ -222,13 +229,20 @@ const Header: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link
-                  to="/auditcheck"
-                  className="block text-violet-400 hover:text-violet-300 transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
+                <button
+                  onClick={() => {
+                    if (isLoggedIn) {
+                      navigate('/auditcheck');
+                    } else {
+                      alert('로그인이 필요한 서비스입니다.');
+                      navigate('/login');
+                    }
+                    setIsMenuOpen(false);
+                  }}
+                  className="block text-amber-400 hover:text-amber-300 transition-colors cursor-pointer w-full text-left"
                 >
-                  CaC
-                </Link>
+                  보안 점검
+                </button>
               </li>
               {isLoggedIn ? (
                 <>

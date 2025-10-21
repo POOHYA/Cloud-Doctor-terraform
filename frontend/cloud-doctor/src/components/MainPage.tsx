@@ -93,6 +93,15 @@ export default function MainPage() {
         if (currentSection === 0) {
           navigate("/about");
         } else if (sections[currentSection].route) {
+          // 보안 점검 서비스는 로그인 확인
+          if (sections[currentSection].id === 'auditcheck') {
+            const isLoggedIn = !!sessionStorage.getItem('username');
+            if (!isLoggedIn) {
+              alert('로그인이 필요한 서비스입니다.');
+              navigate('/login');
+              return;
+            }
+          }
           navigate(sections[currentSection].route!);
         }
       }
@@ -177,6 +186,15 @@ export default function MainPage() {
     if (currentSection === 0) {
       navigate("/about");
     } else if (sections[currentSection].route) {
+      // 보안 점검 서비스는 로그인 확인
+      if (sections[currentSection].id === 'auditcheck') {
+        const isLoggedIn = !!sessionStorage.getItem('username');
+        if (!isLoggedIn) {
+          alert('로그인이 필요한 서비스입니다.');
+          navigate('/login');
+          return;
+        }
+      }
       navigate(sections[currentSection].route!);
     }
   };

@@ -177,7 +177,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      */
     private boolean isAuthRequiredEndpoint(String requestURI) {
         // 로그인/회원가입 등은 인증 불필요
-        if (requestURI.startsWith("/api/auth/")) {
+        if (requestURI.startsWith("/api/auth/") || 
+            requestURI.startsWith("/health") ||
+            requestURI.startsWith("/api/guidelines") ||
+            requestURI.startsWith("/api/providers") ||
+            requestURI.startsWith("/api/services/") ||
+            requestURI.equals("/api/users") ||
+            requestURI.startsWith("/swagger-ui/") ||
+            requestURI.startsWith("/v3/api-docs/")) {
             return false;
         }
         

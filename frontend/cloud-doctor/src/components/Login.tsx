@@ -77,7 +77,19 @@ export default function Login({ showRegister = true }: LoginProps) {
         const success = await adminApi.register(username, email, password, fullName, company);
         if (success) {
           setIsLoginMode(true);
+          // 회원가입 성공 후 폼 초기화
+          setUsername('');
+          setEmail('');
+          setPassword('');
+          setPasswordConfirm('');
+          setFullName('');
+          setCompany('');
           setError('');
+          setSuccess('');
+          setUsernameChecked(false);
+          setUsernameAvailable(false);
+          setEmailChecked(false);
+          setEmailAvailable(false);
           alert('회원가입이 완료되었습니다. 로그인해주세요.');
         } else {
           setError('회원가입에 실패했습니다.');
@@ -284,8 +296,19 @@ export default function Login({ showRegister = true }: LoginProps) {
           <button
             onClick={() => {
               setIsLoginMode(!isLoginMode);
+              // 모든 폼 필드 초기화
+              setUsername('');
+              setEmail('');
+              setPassword('');
+              setPasswordConfirm('');
+              setFullName('');
+              setCompany('');
               setError('');
               setSuccess('');
+              setUsernameChecked(false);
+              setUsernameAvailable(false);
+              setEmailChecked(false);
+              setEmailAvailable(false);
             }}
             className="text-accent hover:text-primary-light font-semibold hover:underline transition-colors"
           >
