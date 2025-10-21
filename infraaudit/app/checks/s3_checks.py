@@ -191,7 +191,7 @@ class S3PublicAccessAndPolicyCheck(BaseCheck):
         
         return {'results': results, 'raw': raw, 'guideline_id': 1}
 
-class S3BucketACLCheck(BaseCheck):
+class S3ACLCheck(BaseCheck):
     """S3 버킷 ACL에 의한 외부 접근 허용 및 정보유출 위험 점검"""
 
     async def check(self) -> Dict:
@@ -318,7 +318,7 @@ class S3BucketACLCheck(BaseCheck):
                     
                     else:
                         # 이론상 여기 도달하지 않지만 안전장치
-                        status = '경고'
+                        status = '오류'
                         message = f"버킷 [{bucket_name}]의 ACL 구성을 확인할 수 없습니다."
                     
                     results.append(self.get_result(status, bucket_name, message, bucket_data))
@@ -329,33 +329,30 @@ class S3BucketACLCheck(BaseCheck):
                     
                     if error_code == 'AccessDenied':
                         results.append(self.get_result(
-                            '경고', bucket_name,
+                            '오류', bucket_name,
                             f"버킷 [{bucket_name}]의 ACL 조회 권한이 없습니다."
                         ))
                     else:
                         results.append(self.get_result(
-                            '경고', bucket_name,
+                            '오류', bucket_name,
                             f"버킷 [{bucket_name}]의 ACL 조회 중 오류 발생: {error_code}"
                         ))
                 
                 except Exception as e:
                     results.append(self.get_result(
-                        '경고', bucket_name,
+                        '오류', bucket_name,
                         f"버킷 [{bucket_name}] 점검 중 예상치 못한 오류: {str(e)}"
                     ))
         
         except Exception as e:
-            results.append(self.get_result('경고', 'N/A', f"S3 버킷 목록 조회 중 오류 발생: {str(e)}"))
+            results.append(self.get_result('오류', 'N/A', f"S3 버킷 목록 조회 중 오류 발생: {str(e)}"))
         
         return {'results': results, 'raw': raw, 'guideline_id': 2}
 
 class S3ReplicationRuleCheck(BaseCheck):
     """S3 복제 규칙 대상 버킷 점검"""
-class S3ReplicationRuleCheck(BaseCheck):
-    """S3 복제 규칙 대상 버킷 점검"""
     
     async def check(self) -> Dict:
-        s3 = self.session.client('s3')
         s3 = self.session.client('s3')
         results = []
         raw = []
@@ -452,9 +449,3 @@ class S3EncryptionCheck(BaseCheck):
         results = []
         results.append(self.get_result('양호', 'N/A', 'S3 암호화 설정 점검이 구현되지 않았습니다.'))
         return {'results': results, 'raw': [], 'guideline_id': 10}
-
-# 기존 클래스들과의 호환성을 위한 별칭
-S3BucketPolicyPublicActionsCheck = S3PublicAccessAndPolicyCheck
-S3BucketPolicyCheck = S3PublicAccessAndPolicyCheck
-S3PublicAccessCheck = S3ACLCheck
-S3BucketACLCheck = S3ACLCheck

@@ -42,26 +42,26 @@ export default function AuditCheck() {
   const [accountId, setAccountId] = useState("");
   const [roleName, setRoleName] = useState("CloudDoctorAuditRole");
   const [externalId, setExternalId] = useState("");
-  const [maskedExternalId, setMaskedExternalId] = useState("");
+  // const [maskedExternalId, setMaskedExternalId] = useState("");
   const [selectedChecks, setSelectedChecks] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AuditResponse | null>(null);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const userInfo = await userApi.getMe();
-        if (userInfo.externalId) {
-          setExternalId(userInfo.externalId);
-          setMaskedExternalId("*".repeat(userInfo.externalId.length));
-        }
-      } catch (err) {
-        console.error("사용자 정보 로드 실패:", err);
-      }
-    };
-    fetchUserInfo();
-  }, []);
+  // useEffect(() => {
+  //   const fetchUserInfo = async () => {
+  //     try {
+  //       const userInfo = await userApi.getMe();
+  //       if (userInfo.externalId) {
+  //         setExternalId(userInfo.externalId);
+  //         setMaskedExternalId("*".repeat(userInfo.externalId.length));
+  //       }
+  //     } catch (err) {
+  //       console.error("사용자 정보 로드 실패:", err);
+  //     }
+  //   };
+  //   fetchUserInfo();
+  // }, []);
 
   const handleCheckToggle = (checkId: string) => {
     setSelectedChecks((prev) =>
@@ -129,7 +129,7 @@ export default function AuditCheck() {
               />
             </div>
 
-            <div>
+            {/* <div>
               <label className="block text-beige mb-2">
                 External ID (자동 입력됨)
               </label>
@@ -140,7 +140,7 @@ export default function AuditCheck() {
                 placeholder="로그인 후 자동 입력"
                 className="w-full px-4 py-2 rounded bg-white/10 text-white placeholder-white/50 cursor-not-allowed"
               />
-            </div>
+            </div> */}
 
             <div>
               <label className="block text-beige mb-2">
@@ -196,31 +196,31 @@ export default function AuditCheck() {
               <div className="grid grid-cols-5 gap-4 mb-6">
                 <div className="bg-white/10 p-4 rounded text-center">
                   <div className="text-2xl font-bold text-white">
-                    {result.summary.total}
+                    {(result.summary as any)["전체"] || 0}
                   </div>
                   <div className="text-sm text-beige">전체</div>
                 </div>
                 <div className="bg-green-500/20 p-4 rounded text-center">
                   <div className="text-2xl font-bold text-green-400">
-                    {result.summary.pass}
+                    {(result.summary as any)["양호"] || 0}
                   </div>
                   <div className="text-sm text-beige">양호</div>
                 </div>
                 <div className="bg-red-500/20 p-4 rounded text-center">
                   <div className="text-2xl font-bold text-red-400">
-                    {result.summary.fail}
+                    {(result.summary as any)["취약"] || 0}
                   </div>
                   <div className="text-sm text-beige">취약</div>
                 </div>
                 <div className="bg-yellow-500/20 p-4 rounded text-center">
                   <div className="text-2xl font-bold text-yellow-400">
-                    {result.summary.warn}
+                    {(result.summary as any)["경고"] || 0}
                   </div>
                   <div className="text-sm text-beige">경고</div>
                 </div>
                 <div className="bg-gray-500/20 p-4 rounded text-center">
                   <div className="text-2xl font-bold text-gray-400">
-                    {result.summary.error}
+                    {(result.summary as any)["오류"] || 0}
                   </div>
                   <div className="text-sm text-beige">오류</div>
                 </div>
@@ -234,9 +234,9 @@ export default function AuditCheck() {
                   <div
                     key={idx}
                     className={`p-4 rounded ${
-                      item.status === "PASS"
+                      item.status === "양호"
                         ? "bg-green-500/10 border-green-500"
-                        : item.status === "FAIL"
+                        : item.status === "취약"
                         ? "bg-red-500/10 border-red-500"
                         : "bg-gray-500/10 border-gray-500"
                     } border`}
@@ -266,36 +266,42 @@ export default function AuditCheck() {
                       <div className="flex flex-col items-end gap-2">
                         <span
                           className={`px-3 py-1 rounded text-sm font-bold ${
-                            item.status === "PASS"
+                            item.status === "양호"
                               ? "bg-green-500 text-white"
-                              : item.status === "FAIL"
+                              : item.status === "취약"
                               ? "bg-red-500 text-white"
                               : "bg-gray-500 text-white"
                           }`}
                         >
                           {item.status}
                         </span>
-                        {(item.status === "FAIL" || item.status === "WARN") &&
-                          result.guideline_ids?.[item.check_id] &&
-                          CHECK_TO_SERVICE[item.check_id] && (
-                            <button
-                              onClick={() => {
-                                const guidelineId =
-                                  result.guideline_ids?.[item.check_id];
-                                if (guidelineId) {
-                                  window.open(
-                                    `/guide/${
-                                      CHECK_TO_SERVICE[item.check_id]
-                                    }/${guidelineId}`,
-                                    "_blank"
-                                  );
-                                }
-                              }}
-                              className="px-3 py-1 rounded text-xs font-medium bg-beige/20 text-beige hover:bg-beige hover:text-primary-dark transition-colors cursor-pointer"
-                            >
-                              조치방안
-                            </button>
-                          )}
+                        {(() => {
+                          console.log('Check:', item.check_id);
+                          console.log('Status:', item.status);
+                          console.log('Guideline ID:', result.guideline_ids?.[item.check_id]);
+                          console.log('Service:', CHECK_TO_SERVICE[item.check_id]);
+                          return (item.status === "취약" || item.status === "경고") &&
+                            result.guideline_ids?.[item.check_id] &&
+                            CHECK_TO_SERVICE[item.check_id];
+                        })() && (
+                          <button
+                            onClick={() => {
+                              const guidelineId =
+                                result.guideline_ids?.[item.check_id];
+                              if (guidelineId) {
+                                window.open(
+                                  `/guide/${
+                                    CHECK_TO_SERVICE[item.check_id]
+                                  }/${guidelineId}`,
+                                  "_blank"
+                                );
+                              }
+                            }}
+                            className="px-3 py-1 rounded text-xs font-medium bg-beige/20 text-beige hover:bg-beige hover:text-primary-dark transition-colors cursor-pointer"
+                          >
+                            조치방안
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

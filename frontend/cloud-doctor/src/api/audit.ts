@@ -62,15 +62,28 @@ export const auditApi = {
 };
 
 export const AVAILABLE_CHECKS = [
-  { id: "IAMRootMFACheck", name: "루트 계정 MFA", category: "IAM" },
+  { id: "EC2IMDSv2Check", name: "EC2 IMDSv2 강제", category: "ec2" },
+  { id: "EC2AMIPrivateCheck", name: "EC2 AMI 프라이빗 설정", category: "ec2" },
+  {
+    id: "EBSSnapshotPrivateCheck",
+    name: "EBS 스냅샷 프라이빗 설정",
+    category: "ec2",
+  },
+  {
+    id: "S3PublicAccessAndPolicyCheck",
+    name: "S3 퍼블릭 액세스 설정",
+    category: "s3",
+  },
+  { id: "S3ACLCheck", name: "S3 버킷 ACL 설정", category: "s3" },
+  {
+    id: "S3ReplicationRuleCheck",
+    name: "S3 버킷 복제 규칙 설정",
+    category: "s3",
+  },
+  { id: "IAMRootMFACheck", name: "루트 계정 MFA", category: "iam" },
   {
     id: "IAMTrustPolicyWildcardCheck",
     name: "IAM 신뢰 정책 와일드카드",
-    category: "iam",
-  },
-  {
-    id: "IAMPassRoleWildcardResourceCheck",
-    name: "IAM PassRole 와일드카드 리소스",
     category: "iam",
   },
   { id: "IAMIdPAssumeRoleCheck", name: "IAM IdP 역할 위임", category: "iam" },
@@ -86,25 +99,6 @@ export const AVAILABLE_CHECKS = [
   },
   { id: "IAMRootAccessKeyCheck", name: "루트 계정 액세스 키", category: "iam" },
   { id: "IAMMFACheck", name: "IAM 사용자 MFA", category: "iam" },
-  {
-    id: "S3PublicAccessAndPolicyCheck",
-    name: "S3 퍼블릭 액세스 설정",
-    category: "s3",
-  },
-  { id: "S3ACLCheck", name: "S3 버킷 ACL 설정", category: "s3" },
-  {
-    id: "S3ReplicationRuleCheck",
-    name: "S3 버킷 복제 규칙 설정",
-    category: "s3",
-  },
-  { id: "EC2IMDSv2Check", name: "EC2 IMDSv2 강제", category: "ec2" },
-  { id: "EC2PublicIPCheck", name: "EC2 퍼블릭 IP", category: "ec2" },
-  { id: "EC2AMIPrivateCheck", name: "EC2 AMI 프라이빗 설정", category: "ec2" },
-  {
-    id: "EBSSnapshotPrivateCheck",
-    name: "EBS 스냅샷 프라이빗 설정",
-    category: "ec2",
-  },
   { id: "EKSIRSARoleCheck", name: "EKS IRSA 역할 권한 검증", category: "eks" },
   {
     id: "KMSImportedKeyMaterialCheck",
@@ -158,17 +152,17 @@ export const AVAILABLE_CHECKS = [
   },
   {
     id: "RDSPublicAccessibilityCheck",
-    name: "RDS 퍼룔릭 액세스 차단",
+    name: "RDS 퍼블릭 액세스 차단",
     category: "rds",
   },
-  { id: "SNSAccessPolicyCheck", name: "SNS 액세스 정책", category: "SNS" },
-  { id: "SQSAccessPolicyCheck", name: "SQS 액세스 정책", category: "SQS" },
+  { id: "SNSAccessPolicyCheck", name: "SNS 액세스 정책", category: "sns" },
+  { id: "SQSAccessPolicyCheck", name: "SQS 액세스 정책", category: "sqs" },
   {
     id: "SESOverlyPermissiveCheck",
     name: "SES 과도한 권한 설정",
     category: "ses",
   },
-  { id: "IAMSSMCommandPolicyCheck", name: "SSM 명령 정책", category: "SSM" },
+  { id: "IAMSSMCommandPolicyCheck", name: "SSM 명령 정책", category: "ssm" },
   {
     id: "BedrockModelAccessCheck",
     name: "Bedrock 모델 액세스",
@@ -178,5 +172,35 @@ export const AVAILABLE_CHECKS = [
     id: "AppStreamOverlyPermissiveCheck",
     name: "AppStream 과도한 권한 설정",
     category: "appstream2.0",
+  },
+  {
+    id: "SecurityGroupRemoteAccessCheck",
+    name: "보안 그룹 원격 액세스 검증",
+    category: "ec2",
+  },
+  {
+    id: "S3EncryptionCheck",
+    name: "S3 버킷 암호화 설정",
+    category: "s3",
+  },
+  {
+    id: "ECRRepositorySecurityCheck",
+    name: "ECR 리포지토리 보안 설정",
+    category: "ecr",
+  },
+  {
+    id: "RedshiftEncryptionCheck",
+    name: "Redshift 암호화 설정",
+    category: "redshift",
+  },
+  {
+    id: "DocumentDBSnapshotPrivateCheck",
+    name: "DocumentDB 스냅샷 프라이빗 설정",
+    category: "documentdb",
+  },
+  {
+    id: "DocumentDBEncryptionCheck",
+    name: "DocumentDB 암호화 설정",
+    category: "documentdb",
   },
 ];

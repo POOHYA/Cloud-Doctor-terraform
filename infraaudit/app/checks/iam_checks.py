@@ -17,10 +17,10 @@ class IAMRootMFACheck(BaseCheck):
                 ))
             else:
                 results.append(self.get_result(
-                    'PASS', 'root', 'Root account MFA enabled'
+                    '양호', 'root', 'Root account MFA enabled'
                 ))
         except Exception as e:
-            results.append(self.get_result('ERROR', 'root', str(e)))
+            results.append(self.get_result('오류', 'root', str(e)))
         
         return results
 
@@ -228,7 +228,7 @@ class IAMPassRoleWildcardResourceCheck(BaseCheck):
                         ))
                 
         except Exception as e:
-            results.append(self.get_result('ERROR', 'N/A', str(e)))
+            results.append(self.get_result('오류', 'N/A', str(e)))
         
         return {'results': results, 'raw': raw, 'guideline_id': 14}
     
@@ -309,7 +309,7 @@ class IAMIdPAssumeRoleCheck(BaseCheck):
                         ))
                         
         except Exception as e:
-            results.append(self.get_result('ERROR', 'N/A', str(e)))
+            results.append(self.get_result('오류', 'N/A', str(e)))
         
         return {'results': results, 'raw': raw, 'guideline_id': 15}
 
@@ -393,7 +393,7 @@ class IAMCrossAccountAssumeRoleCheck(BaseCheck):
                         ))
                         
         except Exception as e:
-            results.append(self.get_result('ERROR', 'N/A', str(e)))
+            results.append(self.get_result('오류', 'N/A', str(e)))
         
         return {'results': results, 'raw': raw, 'guideline_id': 16}
 
@@ -436,7 +436,7 @@ class IAMAccessKeyAgeCheck(BaseCheck):
                         ))
                     else:
                         results.append(self.get_result(
-                            'PASS',
+                            '양호',
                             access_key_id,
                             f"사용자 {username}의 액세스 키는 {key_age}일 전에 생성되었습니다.",
                             {
@@ -446,7 +446,7 @@ class IAMAccessKeyAgeCheck(BaseCheck):
                             }
                         ))
         except Exception as e:
-            results.append(self.get_result('ERROR', 'N/A', str(e)))
+            results.append(self.get_result('오류', 'N/A', str(e)))
         
         return {'results': results, 'raw': raw, 'guideline_id': 13}
 

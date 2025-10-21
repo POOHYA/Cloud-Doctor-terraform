@@ -2,27 +2,29 @@ import uuid
 from datetime import datetime
 from typing import Dict, List
 from app.core.aws_client import AWSClientManager
-from app.checks.ec2_checks import EC2IMDSv2Check, EC2PublicIPCheck, EC2AMIPrivateCheck, EBSSnapshotPrivateCheck
+from app.checks.ec2_checks import EC2IMDSv2Check, EC2AMIPrivateCheck, EBSSnapshotPrivateCheck, SecurityGroupRemoteAccessCheck
+from app.checks.s3_checks import S3PublicAccessAndPolicyCheck, S3ACLCheck, S3ReplicationRuleCheck, S3EncryptionCheck
+from app.checks.iam_checks import IAMRootMFACheck, IAMTrustPolicyWildcardCheck, IAMIdPAssumeRoleCheck, IAMCrossAccountAssumeRoleCheck, IAMAccessKeyAgeCheck, IAMRootAccessKeyCheck, IAMMFACheck
+from app.checks.rds_check import RDSPublicAccessibilityCheck
+from app.checks.cloudtrail_check import CloudTrailManagementEventsCheck, CloudTrailLoggingCheck
 from app.checks.eks_checks import EKSIRSARoleCheck
 from app.checks.kms_checks import KMSImportedKeyMaterialCheck
-from app.checks.base_check import BaseCheck
-from app.checks.iam_checks import IAMRootMFACheck, IAMTrustPolicyWildcardCheck, IAMPassRoleWildcardResourceCheck, IAMIdPAssumeRoleCheck, IAMCrossAccountAssumeRoleCheck, IAMAccessKeyAgeCheck, IAMRootAccessKeyCheck, IAMMFACheck
-from app.checks.s3_checks import S3PublicAccessAndPolicyCheck, S3ACLCheck, S3ReplicationRuleCheck 
-from app.checks.cloudformation_check import IAMRoleCloudFormationPassRoleCheck
-from app.checks.cloudtrail_check import CloudTrailManagementEventsCheck, CloudTrailLoggingCheck
-from app.checks.cognito_check import CognitoTokenExpirationCheck
-from app.checks.elasticbeanstalk_check import ElasticBeanstalkCredentialsCheck
-from app.checks.glue_check import IAMGluePassRoleCheck
-from app.checks.guardduty_checks import GuardDutyStatusCheck
-from app.checks.opensearch_checks import OpenSearchSecurityCheck, IAMGluePassRoleCheck
-from app.checks.organizations_check import OrganizationsSCPCheck
-from app.checks.rds_check import RDSPublicAccessibilityCheck
 from app.checks.sns_check import SNSAccessPolicyCheck
 from app.checks.sqs_check import SQSAccessPolicyCheck
+from app.checks.organizations_check import OrganizationsSCPCheck
+from app.checks.ecr_checks import ECRRepositorySecurityCheck
 from app.checks.ssm_check import IAMSSMCommandPolicyCheck
+from app.checks.guardduty_checks import GuardDutyStatusCheck
+from app.checks.cognito_check import CognitoTokenExpirationCheck
+from app.checks.cloudformation_check import IAMRoleCloudFormationPassRoleCheck
+from app.checks.opensearch_checks import OpenSearchSecurityCheck
+from app.checks.elasticbeanstalk_check import ElasticBeanstalkCredentialsCheck
+from app.checks.redshift_checks import RedshiftEncryptionCheck
+from app.checks.glue_check import IAMGluePassRoleCheck
+from app.checks.documentdb_check import DocumentDBSnapshotPrivateCheck, DocumentDBEncryptionCheck
 from app.checks.bedrock_checks import BedrockModelAccessCheck
-from app.checks.appstream_checks import AppStreamOverlyPermissiveCheck
 from app.checks.ses_checks import SESOverlyPermissiveCheck
+from app.checks.appstream_checks import AppStreamOverlyPermissiveCheck
 
 class AuditService:
     def __init__(self):
@@ -30,21 +32,19 @@ class AuditService:
         self.audits: Dict[str, Dict] = {}
         
         self.check_registry = {
+            'EC2IMDSv2Check': EC2IMDSv2Check,
+            'EC2AMIPrivateCheck': EC2AMIPrivateCheck,
+            'EBSSnapshotPrivateCheck': EBSSnapshotPrivateCheck,
+            'S3PublicAccessAndPolicyCheck': S3PublicAccessAndPolicyCheck,
+            'S3ACLCheck': S3ACLCheck,
+            'S3ReplicationRuleCheck': S3ReplicationRuleCheck,
             'IAMRootMFACheck': IAMRootMFACheck,
             'IAMTrustPolicyWildcardCheck': IAMTrustPolicyWildcardCheck,
-            'IAMPassRoleWildcardResourceCheck': IAMPassRoleWildcardResourceCheck,
             'IAMIdPAssumeRoleCheck': IAMIdPAssumeRoleCheck,
             'IAMCrossAccountAssumeRoleCheck': IAMCrossAccountAssumeRoleCheck,
             'IAMAccessKeyAgeCheck': IAMAccessKeyAgeCheck,
             'IAMRootAccessKeyCheck': IAMRootAccessKeyCheck,
             'IAMMFACheck': IAMMFACheck,
-            'S3PublicAccessAndPolicyCheck': S3PublicAccessAndPolicyCheck,
-            'S3ACLCheck': S3ACLCheck,
-            'S3ReplicationRuleCheck': S3ReplicationRuleCheck,
-            'EC2IMDSv2Check': EC2IMDSv2Check,
-            'EC2PublicIPCheck': EC2PublicIPCheck,
-            'EC2AMIPrivateCheck': EC2AMIPrivateCheck,
-            'EBSSnapshotPrivateCheck': EBSSnapshotPrivateCheck,
             'EKSIRSARoleCheck': EKSIRSARoleCheck,
             'KMSImportedKeyMaterialCheck': KMSImportedKeyMaterialCheck,
             'IAMRoleCloudFormationPassRoleCheck': IAMRoleCloudFormationPassRoleCheck,
@@ -63,6 +63,12 @@ class AuditService:
             'IAMSSMCommandPolicyCheck': IAMSSMCommandPolicyCheck,
             'BedrockModelAccessCheck': BedrockModelAccessCheck,
             'AppStreamOverlyPermissiveCheck': AppStreamOverlyPermissiveCheck,
+            'SecurityGroupRemoteAccessCheck': SecurityGroupRemoteAccessCheck,
+            'S3EncryptionCheck': S3EncryptionCheck,
+            'ECRRepositorySecurityCheck': ECRRepositorySecurityCheck,
+            'RedshiftEncryptionCheck': RedshiftEncryptionCheck,
+            'DocumentDBSnapshotPrivateCheck': DocumentDBSnapshotPrivateCheck,
+            'DocumentDBEncryptionCheck': DocumentDBEncryptionCheck,
         }
     
     async def run_audit(self, account_id: str, role_name: str, checks: List[str] = None, external_id: str = None) -> Dict:
@@ -130,11 +136,11 @@ class AuditService:
     
     def _generate_summary(self, results: List[Dict]) -> Dict:
         summary = {
-            'total': len(results),
-            'pass': 0,
-            'fail': 0,
-            'warn': 0,
-            'error': 0
+            '전체': len(results),
+            '양호': 0,
+            '취약': 0,
+            '경고': 0,
+            '오류': 0
         }
         
         for result in results:

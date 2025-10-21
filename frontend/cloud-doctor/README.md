@@ -44,3 +44,84 @@ You don’t have to ever use `eject`. The curated feature set is suitable for sm
 You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
 To learn React, check out the [React documentation](https://reactjs.org/).
+
+고객사 CloudDoctorAuditRole 역할
+권한정책
+
+---
+
+{
+"Version": "2012-10-17",
+"Statement": [
+{
+"Effect": "Allow",
+"Action": "sts:AssumeRole",
+"Resource": "arn:aws:iam::346448660196:role/CloudDoctorAuditRole"
+},
+{
+"Effect": "Allow",
+"Action": [
+"iam:GetAccountSummary",
+"iam:ListUsers",
+"iam:ListAccessKeys",
+"iam:ListMFADevices",
+"iam:ListRoles",
+"iam:ListUserPolicies",
+"iam:ListAttachedUserPolicies",
+"iam:ListRolePolicies",
+"iam:ListAttachedRolePolicies",
+"iam:GetUserPolicy",
+"iam:GetRolePolicy",
+"iam:GetPolicy",
+"iam:GetPolicyVersion",
+"s3:ListAllMyBuckets",
+"s3:GetBucketPolicy",
+"s3:GetBucketAcl",
+"ec2:DescribeInstances",
+"ec2:DescribeImages",
+"ec2:DescribeSnapshots",
+"ec2:DescribeSnapshotAttribute",
+"ec2:DescribeSecurityGroups",
+"ec2:DescribeSubnets",
+"ec2:DescribeRouteTables",
+"kms:ListKeys",
+"kms:DescribeKey",
+"kms:GetKeyPolicy",
+"cloudformation:DescribeStacks",
+"cloudtrail:DescribeTrails",
+"cloudtrail:GetEventSelectors",
+"cloudtrail:GetTrailStatus",
+"rds:DescribeDBInstances",
+"rds:DescribeDBSnapshots",
+"rds:DescribeDBSnapshotAttributes",
+"rds:DescribeDBClusters",
+"rds:DescribeDBClusterSnapshots",
+"rds:DescribeDBClusterSnapshotAttributes",
+"rds:DescribeDBSubnetGroups",
+"sns:ListTopics",
+"sns:GetTopicAttributes"
+],
+"Resource": "\*"
+}
+]
+}
+
+---
+
+신뢰정책
+
+{
+"Version": "2012-10-17",
+"Statement": [
+{
+"Effect": "Allow",
+"Principal": {
+"AWS": "arn:aws:iam::346448660196:root"
+},
+"Action": "sts:AssumeRole",
+"Condition": {}
+}
+]
+}
+
+---
