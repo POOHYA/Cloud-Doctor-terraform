@@ -29,6 +29,9 @@ jobs:
       # 4️⃣ 빌드
       - name: Build project
         working-directory: frontend/cloud-doctor
+        env:
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+          REACT_APP_AUDIT_API_URL: ${{ secrets.REACT_APP_AUDIT_API_URL }}
         run: CI=false npm run build
 
       # 5️⃣ EC2로 배포 (빌드 결과만 복사)
