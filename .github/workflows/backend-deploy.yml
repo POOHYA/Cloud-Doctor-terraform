@@ -20,6 +20,7 @@ jobs:
       ACCESS_TOKEN_EXPIRATION: ${{ secrets.ACCESS_TOKEN_EXPIRATION }}
       REFRESH_TOKEN_EXPIRATION: ${{ secrets.REFRESH_TOKEN_EXPIRATION }}
       COOKIE_SECURE: true
+      INFRAAUDIT_API_URL: ${{ secrets.INFRAAUDIT_API_URL }}
       BASTION_PUBLIC_IP: ${{ secrets.BASTION_PUBLIC_IP }}
       PRIVATE_IP: ${{ secrets.PRIVATE_IP }}
 
@@ -76,6 +77,7 @@ jobs:
               export ACCESS_TOKEN_EXPIRATION=${{ secrets.ACCESS_TOKEN_EXPIRATION }}
               export REFRESH_TOKEN_EXPIRATION=${{ secrets.REFRESH_TOKEN_EXPIRATION }}
               export COOKIE_SECURE=true
+              export INFRAAUDIT_API_URL=${{ secrets.INFRAAUDIT_API_URL }}
 
               sudo docker load -i /home/ubuntu/cloud-doctor-backend.tar
               sudo docker stop cloud-doctor-backend || true
@@ -90,6 +92,7 @@ jobs:
                 -e ACCESS_TOKEN_EXPIRATION=\$ACCESS_TOKEN_EXPIRATION \
                 -e REFRESH_TOKEN_EXPIRATION=\$REFRESH_TOKEN_EXPIRATION \
                 -e COOKIE_SECURE=\$COOKIE_SECURE \
+                -e INFRAAUDIT_API_URL=\$INFRAAUDIT_API_URL \
                 --restart unless-stopped \
                 --name cloud-doctor-backend \
                 cloud-doctor-backend
