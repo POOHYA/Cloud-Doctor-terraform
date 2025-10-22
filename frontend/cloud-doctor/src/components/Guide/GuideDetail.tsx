@@ -14,6 +14,7 @@ export type GuideItemProps = {
   remediation: string[];
   sideEffect: string;
   note: string;
+  links?: Array<{ title: string; url: string }>;
 };
 
 const mapApiToGuideItem = (item: any, serviceName?: string): GuideItemProps => {
@@ -34,6 +35,7 @@ const mapApiToGuideItem = (item: any, serviceName?: string): GuideItemProps => {
       .filter((s: string) => s.trim()),
     sideEffect: item.sideEffects || "",
     note: item.whyDangerous || "",
+    links: item.links || [],
   };
 };
 
@@ -139,6 +141,29 @@ const GuideItem: React.FC<{ data: GuideItemProps }> = ({ data }) => {
                 ⚡ Side Effect
               </h4>
               <p className="text-slate-300">{data.sideEffect}</p>
+            </div>
+          )}
+
+          {data.links && data.links.length > 0 && (
+            <div className="p-5 bg-gradient-to-br from-purple-900/20 to-pink-900/20 rounded-2xl shadow-md border border-purple-600/30">
+              <h4 className="text-base font-bold text-purple-400 mb-3 flex items-center gap-2">
+                🔗 침해사례 및 공격기법
+              </h4>
+              <ul className="space-y-2">
+                {data.links.slice(0, 4).map((link, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="text-purple-400 mt-0.5">•</span>
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-purple-300 hover:text-purple-100 underline break-all flex-1"
+                    >
+                      {link.title || link.url}
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </aside>
@@ -333,7 +358,10 @@ export default function GuideDetail() {
           mapApiToGuideItem(g, targetService.displayName)
         );
         console.log("Mapped articles:", mapped);
-        console.log("Article IDs:", mapped.map((a: any) => a.id));
+        console.log(
+          "Article IDs:",
+          mapped.map((a: any) => a.id)
+        );
         setArticles(mapped);
       } catch (error) {
         console.error("데이터 불러오기 실패:", error);
@@ -351,11 +379,14 @@ export default function GuideDetail() {
     : selectedCategory
     ? articles.filter((a) => a.category === selectedCategory)
     : articles;
-  
+
   console.log("Filter - id param:", id);
   console.log("Filter - all articles:", articles.length);
   console.log("Filter - filtered articles:", filteredArticles.length);
-  console.log("Filter - filtered IDs:", filteredArticles.map(a => a.id));
+  console.log(
+    "Filter - filtered IDs:",
+    filteredArticles.map((a) => a.id)
+  );
 
   const scrollToArticle = (index: number, articleId: string) => {
     window.location.hash = articleId;
@@ -369,8 +400,6 @@ export default function GuideDetail() {
       }
     }, 100);
   };
-
-
 
   if (loading) {
     return (
@@ -388,9 +417,9 @@ export default function GuideDetail() {
           <div className="text-sm bg-red-900/50 p-4 rounded">
             <div>DEBUG INFO:</div>
             <div>Service: {service}</div>
-            <div>ID param: {id || 'none'}</div>
+            <div>ID param: {id || "none"}</div>
             <div>Total articles: {articles.length}</div>
-            <div>Article IDs: {articles.map(a => a.id).join(', ')}</div>
+            <div>Article IDs: {articles.map((a) => a.id).join(", ")}</div>
             <div>Looking for ID: {id}</div>
           </div>
         </div>
@@ -403,20 +432,20 @@ export default function GuideDetail() {
       <div className="flex gap-8 max-w-7xl mx-auto p-8">
         {!id && (
           <aside className="hidden md:block w-64 flex-shrink-0">
-          <div className="sticky top-24 bg-slate-800/80 backdrop-blur-xl rounded-2xl shadow-lg p-6 border border-slate-700">
-            <h3 className="text-lg font-bold text-cyan-400 mb-4">📑 목차</h3>
-            <nav className="space-y-2">
-              {filteredArticles.map((article, index) => (
-                <button
-                  key={article.id}
-                  onClick={() => scrollToArticle(index, article.id)}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-700/50 transition-colors text-sm text-slate-300 hover:text-cyan-400 font-medium"
-                >
-                  {index + 1}. {article.title}
-                </button>
-              ))}
-            </nav>
-          </div>
+            <div className="sticky top-24 bg-slate-800/80 backdrop-blur-xl rounded-2xl shadow-lg p-6 border border-slate-700">
+              <h3 className="text-lg font-bold text-cyan-400 mb-4">📑 목차</h3>
+              <nav className="space-y-2">
+                {filteredArticles.map((article, index) => (
+                  <button
+                    key={article.id}
+                    onClick={() => scrollToArticle(index, article.id)}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-700/50 transition-colors text-sm text-slate-300 hover:text-cyan-400 font-medium"
+                  >
+                    {index + 1}. {article.title}
+                  </button>
+                ))}
+              </nav>
+            </div>
           </aside>
         )}
 
