@@ -8,7 +8,7 @@ const Header: React.FC = () => {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const isLoggedIn = !!sessionStorage.getItem('username');
+  const isLoggedIn = !!sessionStorage.getItem("username");
 
   const handleLogout = async () => {
     await adminApi.logout();
@@ -32,7 +32,7 @@ const Header: React.FC = () => {
             <ul className="flex gap-6">
               <li>
                 <button
-                  onClick={() => navigate('/about')}
+                  onClick={() => navigate("/about")}
                   className={`relative py-2 px-1 transition-all duration-300 group align-baseline inline-block ${
                     location.pathname === "/about"
                       ? "text-rose-400"
@@ -51,7 +51,7 @@ const Header: React.FC = () => {
               </li>
               <li>
                 <button
-                  onClick={() => navigate('/guide')}
+                  onClick={() => navigate("/guide")}
                   className={`relative py-2 px-1 transition-all duration-300 group align-baseline inline-block ${
                     location.pathname === "/guide"
                       ? "text-cyan-400"
@@ -68,7 +68,7 @@ const Header: React.FC = () => {
                   ></span>
                 </button>
               </li>
-              <li>
+              {/* <li>
                 <button
                   onClick={() => navigate('/prowler')}
                   className={`relative py-2 px-1 transition-all duration-300 group align-baseline inline-block ${
@@ -86,10 +86,10 @@ const Header: React.FC = () => {
                     }`}
                   ></span>
                 </button>
-              </li>
+              </li> */}
               <li>
                 <button
-                  onClick={() => navigate('/checklist')}
+                  onClick={() => navigate("/checklist")}
                   className={`relative py-2 px-1 transition-all duration-300 group align-baseline inline-block ${
                     location.pathname === "/checklist"
                       ? "text-violet-400"
@@ -110,10 +110,10 @@ const Header: React.FC = () => {
                 <button
                   onClick={() => {
                     if (isLoggedIn) {
-                      navigate('/auditcheck');
+                      navigate("/auditcheck");
                     } else {
-                      alert('로그인이 필요한 서비스입니다.');
-                      navigate('/login');
+                      alert("로그인이 필요한 서비스입니다.");
+                      navigate("/login");
                     }
                   }}
                   className={`relative py-2 px-1 transition-all duration-300 group align-baseline inline-block ${
@@ -232,10 +232,10 @@ const Header: React.FC = () => {
                 <button
                   onClick={() => {
                     if (isLoggedIn) {
-                      navigate('/auditcheck');
+                      navigate("/auditcheck");
                     } else {
-                      alert('로그인이 필요한 서비스입니다.');
-                      navigate('/login');
+                      alert("로그인이 필요한 서비스입니다.");
+                      navigate("/login");
                     }
                     setIsMenuOpen(false);
                   }}

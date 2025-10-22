@@ -24,7 +24,7 @@ const Footer: React.FC<Props> = ({ onDemoClick }) => {
             <p className="text-slate-400 leading-relaxed text-sm">
               AWS 클라우드 보안 관리의 새로운 기준
               <br />
-              스마트한 CaC 솔루션으로 시작하세요
+              안전한 클라우드 환경을 위한 효용성있는 서비스
             </p>
           </div>
 
@@ -36,20 +36,29 @@ const Footer: React.FC<Props> = ({ onDemoClick }) => {
             <ul className="space-y-2">
               <li>
                 <a
+                  href="/about"
+                  className="text-slate-400 hover:text-cyan-400 transition-colors text-sm flex items-center gap-2"
+                >
+                  <span>→</span> 개요
+                </a>
+              </li>
+              <li>
+                <a
                   href="/guide"
                   className="text-slate-400 hover:text-cyan-400 transition-colors text-sm flex items-center gap-2"
                 >
                   <span>→</span> 가이드
                 </a>
               </li>
-              <li>
+
+              {/* <li>
                 <a
                   href="/prowler"
                   className="text-slate-400 hover:text-cyan-400 transition-colors text-sm flex items-center gap-2"
                 >
                   <span>→</span> prowler
                 </a>
-              </li>
+              </li> */}
               <li>
                 <a
                   href="/checklist"
@@ -58,15 +67,15 @@ const Footer: React.FC<Props> = ({ onDemoClick }) => {
                   <span>→</span> 체크리스트
                 </a>
               </li>
+              <li>
+                <a
+                  href="/auditcheck"
+                  className="text-slate-400 hover:text-cyan-400 transition-colors text-sm flex items-center gap-2"
+                >
+                  <span>→</span> 보안 점검
+                </a>
+              </li>
             </ul>
-          </div>
-
-          {/* 문의 */}
-          <div>
-            <h4 className="font-semibold mb-4 text-white flex items-center gap-2">
-              <span className="text-violet-400">■</span> 문의하기
-            </h4>
-            <ul className="space-y-2"></ul>
           </div>
         </div>
 

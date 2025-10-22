@@ -321,7 +321,7 @@ class S3ACLCheck(BaseCheck):
                         status = 'ERROR'
                         message = f"버킷 [{bucket_name}]의 ACL 구성을 확인할 수 없습니다."
                     
-                    results.append(self.get_result(status, bucket_name, message, bucket_data))
+                    results.append(self.get_result(status, bucket_name, message, details))
                     
                 except s3.exceptions.ClientError as e:
                     error_code = e.response['Error']['Code']

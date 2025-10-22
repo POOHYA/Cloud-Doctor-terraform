@@ -47,6 +47,7 @@ export default function AuditCheck() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AuditResponse | null>(null);
   const [error, setError] = useState("");
+  const [showGuideModal, setShowGuideModal] = useState(false);
 
   // useEffect(() => {
   //   const fetchUserInfo = async () => {
@@ -97,9 +98,17 @@ export default function AuditCheck() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-primary-dark via-primary to-primary-dark py-12">
       <div className="p-6 max-w-5xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-beige to-primary-light bg-clip-text text-transparent">
-          🔍 AWS 보안 점검
-        </h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-beige to-primary-light bg-clip-text text-transparent">
+            🔍 AWS 보안 점검
+          </h1>
+          <button
+            onClick={() => setShowGuideModal(true)}
+            className="px-4 py-2 bg-beige/20 text-beige border border-beige rounded hover:bg-beige hover:text-primary-dark transition-colors font-medium"
+          >
+            점검계정 생성 가이드
+          </button>
+        </div>
 
         <form
           onSubmit={handleSubmit}
@@ -321,6 +330,148 @@ export default function AuditCheck() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {showGuideModal && (
+          <div
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowGuideModal(false)}
+          >
+            <div
+              className="bg-white rounded-lg p-8 w-full max-w-5xl max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-primary-dark">
+                  점검계정 역할(CloudDoctorAuditRole) 생성 가이드
+                </h2>
+                <div className="flex items-center gap-3">
+                  <a
+                    href="/clouddoctor-role.yaml"
+                    download="clouddoctor-role.yaml"
+                    className="px-4 py-2 bg-accent text-white rounded font-medium hover:bg-accent/80 transition-colors"
+                  >
+                    yaml파일 다운
+                  </a>
+                  <button
+                    onClick={() => setShowGuideModal(false)}
+                    className="text-gray-500 hover:text-gray-700 text-2xl"
+                  >
+                    &times;
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-6 text-gray-700">
+                <div className="bg-beige p-4 rounded-lg">
+                  <h3 className="font-bold text-lg mb-3">
+                    1️⃣ CloudFormation 접속
+                  </h3>
+                  <div className="bg-gray-100 rounded p-4 mb-2">
+                    <img
+                      src="/img/rolecreate/role-1.png"
+                      alt="CloudFormation 접속"
+                      className="w-full rounded"
+                    />
+                  </div>
+                  <p>상단 검색창에서 CloudFormation 검색</p>
+                </div>
+                <div className="bg-beige p-4 rounded-lg">
+                  <h3 className="font-bold text-lg mb-3">2️⃣ 새 리소스 생성</h3>
+                  <div className="bg-gray-100 rounded p-4 mb-2">
+                    <img
+                      src="/img/rolecreate/role-2.png"
+                      alt="새 리소스 생성"
+                      className="w-full rounded"
+                    />
+                  </div>
+                  <p>스택 생성 → 새 리소스 사용(표준) 선택</p>
+                </div>
+                <div className="bg-beige p-4 rounded-lg">
+                  <h3 className="font-bold text-lg mb-3">3️⃣ 스택생성</h3>
+                  <div className="bg-gray-100 rounded p-4 mb-2">
+                    <img
+                      src="/img/rolecreate/role-3.png"
+                      alt="스택생성"
+                      className="w-full rounded"
+                    />
+                  </div>
+                  <ul className="list-disc ml-6 mt-2 space-y-1">
+                    <li>기존 템플릿 선택 → 템플릿 파일 업로드</li>
+                    <li>템플릿 파일 업로드 - 파일 선택</li>
+                    <li>
+                      위에서 다운로드 한 clouddoctor-role.yaml 선택 후 업로드
+                    </li>
+                    <li>다음 클릭</li>
+                  </ul>
+                </div>
+                <div className="bg-beige p-4 rounded-lg">
+                  <h3 className="font-bold text-lg mb-3">
+                    4️⃣ 스택 세부 정보 지정
+                  </h3>
+                  <div className="bg-gray-100 rounded p-4 mb-2">
+                    <img
+                      src="/img/rolecreate/role-4.png"
+                      alt="스택 세부 정보 지정"
+                      className="w-full rounded"
+                    />
+                  </div>
+                  <ul className="list-disc ml-6 mt-2 space-y-1">
+                    <li>Stack name: [스택 명]</li>
+                    <li>다음 클릭</li>
+                  </ul>
+                </div>
+                <div className="bg-beige p-4 rounded-lg">
+                  <h3 className="font-bold text-lg mb-3">5️⃣ 스택 옵션 구성</h3>
+                  <div className="bg-gray-100 rounded p-4 mb-2">
+                    <img
+                      src="/img/rolecreate/role-5.png"
+                      alt="스택 옵션 구성"
+                      className="w-full rounded"
+                    />
+                  </div>
+                  <ul className="list-disc ml-6 mt-2 space-y-1">
+                    <li>기능) IAM resources 생성 허용 체크</li>
+                    <li>다음 클릭</li>
+                  </ul>
+                </div>
+                <div className="bg-beige p-4 rounded-lg">
+                  <h3 className="font-bold text-lg mb-3">6️⃣ 검토 & 생성</h3>
+                  <div className="bg-gray-100 rounded p-4 mb-2">
+                    <img
+                      src="/img/rolecreate/role-6.png"
+                      alt="검토 & 생성"
+                      className="w-full rounded"
+                    />
+                  </div>
+                  <p>입력 정보 확인 후 전송 클릭</p>
+                </div>
+                <div className="bg-beige p-4 rounded-lg">
+                  <h3 className="font-bold text-lg mb-3">7️⃣ 생성 완료 확인</h3>
+                  <div className="bg-gray-100 rounded p-4 mb-2">
+                    <img
+                      src="/img/rolecreate/role-7.png"
+                      alt="생성 완료 확인"
+                      className="w-full rounded"
+                    />
+                  </div>
+                  <p>스택 상태: CREATE_COMPLETE</p>
+                </div>
+                <div className="bg-beige p-4 rounded-lg">
+                  <h3 className="font-bold text-lg mb-3">
+                    8️⃣ 리소스 탭에서 IAM Role 확인
+                  </h3>
+                  <div className="bg-gray-100 rounded p-4 mb-2">
+                    <img
+                      src="/img/rolecreate/role-8.png"
+                      alt="IAM Role 확인"
+                      className="w-full rounded"
+                    />
+                  </div>
+                  <p>IAM → 역할 → CloudDoctorAuditRole</p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

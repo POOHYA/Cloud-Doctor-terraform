@@ -5,31 +5,31 @@ const sections = [
   {
     id: "home",
     title: "CloudDoctor",
-    subtitle: "클라우드 보안을 위한 완벽한 솔루션",
+    subtitle: "안전한 클라우드 환경을 위한 효용성있는 서비스",
     description: "스크롤하여 다음 섹션으로 이동하세요.",
     bgColor: "bg-primary",
   },
   {
     id: "guide",
     title: "보안 가이드",
-    subtitle: "AWS 보안 모범 사례",
+    subtitle: "실제 사례 기반의 AWS 보안 가이드",
     description: "체계적인 보안 가이드라인을 확인하세요.",
     bgColor: "bg-primary-dark",
     route: "/guide",
   },
-  {
-    id: "prowler",
-    title: "Prowler 스캔",
-    subtitle: "자동화된 보안 검사",
-    description: "클라우드 인프라의 보안 상태를 점검하세요.",
-    bgColor: "bg-accent",
-    route: "/prowler",
-  },
+  // {
+  //   id: "prowler",
+  //   title: "Prowler 스캔",
+  //   subtitle: "자동화된 보안 검사",
+  //   description: "클라우드 인프라의 보안 상태를 점검하세요.",
+  //   bgColor: "bg-accent",
+  //   route: "/prowler",
+  // },
   {
     id: "checklist",
     title: "체크리스트",
     subtitle: "보안 점검 목록",
-    description: "필수 보안 항목들을 체크하세요.",
+    description: "보안 가이드 기반의 필수 보안 항목들을 체크하세요.",
     bgColor: "bg-surface",
     route: "/checklist",
   },
@@ -94,11 +94,11 @@ export default function MainPage() {
           navigate("/about");
         } else if (sections[currentSection].route) {
           // 보안 점검 서비스는 로그인 확인
-          if (sections[currentSection].id === 'auditcheck') {
-            const isLoggedIn = !!sessionStorage.getItem('username');
+          if (sections[currentSection].id === "auditcheck") {
+            const isLoggedIn = !!sessionStorage.getItem("username");
             if (!isLoggedIn) {
-              alert('로그인이 필요한 서비스입니다.');
-              navigate('/login');
+              alert("로그인이 필요한 서비스입니다.");
+              navigate("/login");
               return;
             }
           }
@@ -187,11 +187,11 @@ export default function MainPage() {
       navigate("/about");
     } else if (sections[currentSection].route) {
       // 보안 점검 서비스는 로그인 확인
-      if (sections[currentSection].id === 'auditcheck') {
-        const isLoggedIn = !!sessionStorage.getItem('username');
+      if (sections[currentSection].id === "auditcheck") {
+        const isLoggedIn = !!sessionStorage.getItem("username");
         if (!isLoggedIn) {
-          alert('로그인이 필요한 서비스입니다.');
-          navigate('/login');
+          alert("로그인이 필요한 서비스입니다.");
+          navigate("/login");
           return;
         }
       }
