@@ -92,31 +92,35 @@ export const AVAILABLE_CHECKS = [
     name: "IAM 신뢰 정책 와일드카드 사용 금지",
     category: "iam",
   },
-  { id: "IAMIdPAssumeRoleCheck", name: "IAM IdP 역할 위임", category: "iam" },
+  // { id: "IAMIdPAssumeRoleCheck", name: "IAM IdP 역할 위임", category: "iam" },
   {
     id: "IAMCrossAccountAssumeRoleCheck",
     name: "IAM cross account 역할 위임",
     category: "iam",
   },
-  {
-    id: "IAMAccessKeyAgeCheck",
-    name: "IAM 액세스 키 수명 (90일)",
-    category: "iam",
-  },
+  // {
+  //   id: "IAMAccessKeyAgeCheck",
+  //   name: "IAM 액세스 키 수명 (90일)",
+  //   category: "iam",
+  // },
   {
     id: "IAMRootAccessKeyCheck",
-    name: "루트 계정 액세스 키 사용금지",
+    name: "IAM 루트 계정 액세스 키 사용금지",
     category: "iam",
   },
-  { id: "IAMMFACheck", name: "모든 사용자 계정 MFA 활성화", category: "iam" },
   {
-    id: "IAMPassRoleWildcardResourceCheck",
-    name: "IAM PassRole 리소스에 와일드카드 존재 검증",
+    id: "IAMMFACheck",
+    name: "IAM 모든 사용자 계정 MFA 활성화",
     category: "iam",
   },
+  // {
+  //   id: "IAMPassRoleWildcardResourceCheck",
+  //   name: "IAM PassRole 리소스에 와일드카드 존재 검증",
+  //   category: "iam",
+  // },
   {
     id: "SecurityGroupRemoteAccessCheck",
-    name: "Security Group SSH/RDP 접근 제한",
+    name: "VPC Security Group SSH/RDP 접근 제한",
     category: "vpc",
   },
   {
@@ -129,22 +133,22 @@ export const AVAILABLE_CHECKS = [
     name: "RDS 스냅샷 퍼블릭 액세스 치단",
     category: "rds",
   },
-  {
-    id: "CloudTrailManagementEventsCheck",
-    name: "CloudTrail 읽기/쓰기 모두 로깅 활성화",
-    category: "cloudtrail",
-  },
+  // {
+  //   id: "CloudTrailManagementEventsCheck",
+  //   name: "CloudTrail 읽기/쓰기 모두 로깅 활성화",
+  //   category: "cloudtrail",
+  // },
   {
     id: "CloudTrailLoggingCheck",
     name: "CloudTrail 로깅 활성화",
     category: "cloudtrail",
   },
-  { id: "EKSIRSARoleCheck", name: "EKS IRSA 역할 권한 검증", category: "eks" },
-  {
-    id: "KMSImportedKeyMaterialCheck",
-    name: "KMS 외부 키 구성 원본 검증",
-    category: "kms",
-  },
+  // { id: "EKSIRSARoleCheck", name: "EKS IRSA 역할 권한 검증", category: "eks" },
+  // {
+  //   id: "KMSImportedKeyMaterialCheck",
+  //   name: "KMS 외부 키 구성 원본 검증",
+  //   category: "kms",
+  // },
   { id: "SNSAccessPolicyCheck", name: "SNS 액세스 정책", category: "sns" },
 
   { id: "SQSAccessPolicyCheck", name: "SQS 액세스 정책", category: "sqs" },
@@ -158,7 +162,7 @@ export const AVAILABLE_CHECKS = [
     name: "ECR 레포지토리 보안 설정",
     category: "ecr",
   },
-  { id: "IAMSSMCommandPolicyCheck", name: "SSM 명령 정책", category: "ssm" },
+  // { id: "IAMSSMCommandPolicyCheck", name: "SSM 명령 정책", category: "ssm" },
   {
     id: "SSMDocumentPublicAccessCheck",
     name: "SSM 문서 브라이빗 설정",
@@ -189,11 +193,11 @@ export const AVAILABLE_CHECKS = [
     name: "OpenSearch VPC 설정",
     category: "opensearch",
   },
-  {
-    id: "ElasticBeanstalkCredentialsCheck",
-    name: "Elastic Beanstalk 자격증명 보안",
-    category: "elasticbeanstalk",
-  },
+  // {
+  //   id: "ElasticBeanstalkCredentialsCheck",
+  //   name: "Elastic Beanstalk 자격증명 보안",
+  //   category: "elasticbeanstalk",
+  // },
   {
     id: "RedshiftEncryptionCheck",
     name: "Redshift 암호화 설정",
@@ -224,9 +228,9 @@ export const AVAILABLE_CHECKS = [
     name: "SES 고위험 권한의 최소 권한 설정",
     category: "ses",
   },
-  {
-    id: "AppStreamOverlyPermissiveCheck",
-    name: "AppStream 최소 권한 설정",
-    category: "appstream2.0",
-  },
+  // {
+  //   id: "AppStreamOverlyPermissiveCheck",
+  //   name: "AppStream 최소 권한 설정",
+  //   category: "appstream2.0",
+  // },
 ];

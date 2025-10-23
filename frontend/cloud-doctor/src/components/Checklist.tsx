@@ -115,7 +115,7 @@ export default function Checklist() {
         <h1 className="text-4xl font-bold mb-8 text-white">
           🛡️ AWS 보안 체크리스트
         </h1>
-
+        <p>서비스 선택</p>
         {/* 서비스 선택 버튼 */}
 
         <div className="flex flex-wrap gap-2 mb-6">
@@ -133,7 +133,6 @@ export default function Checklist() {
             </button>
           ))}
         </div>
-
         {/* Select All / Clear */}
         <div className="flex gap-2 mb-6">
           <button
@@ -203,7 +202,6 @@ export default function Checklist() {
             </div>
           </div>
         </div>
-
         {/* 체크리스트 테이블 */}
         <div className="bg-primary-dark/50 backdrop-blur-xl rounded-3xl shadow-2xl p-4 md:p-8 border border-primary overflow-x-auto">
           <table className="table-auto w-full border-collapse min-w-[600px]">

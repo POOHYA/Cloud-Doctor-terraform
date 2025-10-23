@@ -40,6 +40,7 @@ Resources:
                   - iam:ListUserPolicies
                   - iam:GetUserPolicy
                   - iam:ListAccessKeys
+                  - iam:ListPolicies
                   - iam:GetAccessKeyLastUsed
                   - iam:ListRoles
                   - iam:GetRole

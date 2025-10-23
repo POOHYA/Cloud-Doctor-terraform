@@ -628,4 +628,4 @@ class IAMMFACheck(BaseCheck):
         except Exception as e:
             results.append(self.get_result('오류', 'N/A', str(e)))
         
-        return {'results': results, 'raw': raw, 'guideline_id': 16}
+        return {'results': results, 'raw': raw, 'guideline_id': 18}

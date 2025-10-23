@@ -4,7 +4,7 @@ export default function About() {
       <div className="max-w-6xl mx-auto px-6">
         {/* 슬로건 */}
         <div className="text-center mb-16">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-beige to-primary-light bg-clip-text text-transparent leading-tight">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-beige to-primary-light bg-clip-text text-transparent leading-tight tracking-wide">
             실제 침해사례 기반의 보안 점검으로,
             <br />
             AWS 인프라를 안전하게 관리하세요.

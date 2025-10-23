@@ -49,6 +49,8 @@ export default function AuditCheck() {
   const [error, setError] = useState("");
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [showManualCheckModal, setShowManualCheckModal] = useState(false);
+  const [manualCheckFilter, setManualCheckFilter] = useState("all");
+  const [checkFilter, setCheckFilter] = useState("all");
   const [userUuid, setUserUuid] = useState("");
   const [loadingUuid, setLoadingUuid] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
@@ -152,20 +154,18 @@ export default function AuditCheck() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-primary-dark via-primary to-primary-dark py-12">
       <div className="p-6 max-w-5xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold mb-8 text-white">
-            🔍 AWS 보안 점검
-          </h1>
+        <div className="flex justify-between items-start mb-8">
+          <h1 className="text-4xl font-bold text-white">🔍 AWS 보안 점검</h1>
           <div className="flex gap-3">
             <button
               onClick={() => setShowManualCheckModal(true)}
-              className="px-4 py-2 bg-white/10 text-white border border-white/30 rounded hover:bg-white/20 transition-colors font-medium"
+              className="px-4 py-2 bg-white/10 text-white border border-white/30 rounded hover:bg-white/20 transition-colors font-medium whitespace-nowrap"
             >
               자동점검 불가 항목
             </button>
             <button
               onClick={() => setShowGuideModal(true)}
-              className="px-4 py-2 bg-beige/20 text-beige border border-white/30 rounded hover:bg-white/20 transition-colors font-medium"
+              className="px-4 py-2 bg-beige/20 text-beige border border-white/30 rounded hover:bg-white/20 transition-colors font-medium whitespace-nowrap"
             >
               점검 IAM role 생성 가이드
             </button>
@@ -255,6 +255,42 @@ export default function AuditCheck() {
                 >
                   초기화
                 </button>
+              </div>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {[...new Set(AVAILABLE_CHECKS.map((check) => check.category))]
+                  .sort()
+                  .map((category) => (
+                    <button
+                      key={category}
+                      type="button"
+                      onClick={() => {
+                        const categoryChecks = AVAILABLE_CHECKS.filter(
+                          (check) => check.category === category
+                        ).map((check) => check.id);
+                        setSelectedChecks((prev) => {
+                          const allSelected = categoryChecks.every((id) =>
+                            prev.includes(id)
+                          );
+                          if (allSelected) {
+                            return prev.filter(
+                              (id) => !categoryChecks.includes(id)
+                            );
+                          } else {
+                            return [...new Set([...prev, ...categoryChecks])];
+                          }
+                        });
+                      }}
+                      className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                        AVAILABLE_CHECKS.filter(
+                          (check) => check.category === category
+                        ).every((check) => selectedChecks.includes(check.id))
+                          ? "bg-beige text-primary-dark"
+                          : "bg-white/20 text-white hover:bg-white/30"
+                      }`}
+                    >
+                      {category.toUpperCase()}
+                    </button>
+                  ))}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {AVAILABLE_CHECKS.map((check) => (
@@ -441,50 +477,346 @@ export default function AuditCheck() {
               </div>
               <div className="space-y-6 text-gray-700">
                 <p className="text-gray-700 mb-4">
-                  다음 항목들은 AWS API로 자동 점검이 불가능하여 수동으로 확인이
-                  필요합니다.
+                  다음 항목들은 AWS API로 자동 점검이 불가능하거나 정성적
+                  평가기준으로 인하여 수동으로 확인이 필요합니다.
                 </p>
+                {(manualCheckFilter === "all" ||
+                  manualCheckFilter === "ec2") && (
+                  <div className="bg-beige p-4 rounded-lg">
+                    <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                      {" "}
+                      <a
+                        href="/guide/ec2/4"
+                        target="_blank"
+                        className="text-primary-dark hover:text-accent no-underline"
+                      >
+                        1. Organizations SCP 정책 설정에서 사전 허용된 계정
+                        목록의 AMI만 리스트에 등록
+                      </a>
+                    </h3>
+                  </div>
+                )}
+                {(manualCheckFilter === "all" ||
+                  manualCheckFilter === "s3") && (
+                  <div className="bg-beige p-4 rounded-lg">
+                    <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                      {" "}
+                      <a
+                        href="/guide/s3/8"
+                        target="_blank"
+                        className="text-primary-dark hover:text-accent no-underline"
+                      >
+                        2. S3 ACL의 Grantee 목록에 12자리 숫자(외부 AWS 계정
+                        ID)가 있으면 해당 공유를 검증
+                      </a>
+                    </h3>
+                  </div>
+                )}
+                {(manualCheckFilter === "all" ||
+                  manualCheckFilter === "iam") && (
+                  <>
+                    <div className="bg-beige p-4 rounded-lg">
+                      <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                        {" "}
+                        <a
+                          href="/guide/iam/10"
+                          target="_blank"
+                          className="text-primary-dark hover:text-accent no-underline"
+                        >
+                          3. 시크릿 스캐닝 도구를 통한 자격증명 평문 저장 여부
+                          점검(ex. Trufflehog, Gitleaks 등으로 외부/공개 저장소
+                          속 자격증명 평문 저장 점검)
+                        </a>
+                      </h3>
+                    </div>
+                    <div className="bg-beige p-4 rounded-lg">
+                      <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                        {" "}
+                        <a
+                          href="/guide/iam/11"
+                          target="_blank"
+                          className="text-primary-dark hover:text-accent no-underline"
+                        >
+                          4. 민감 정보의 자동 교체 로직이 존재(ex. Secrets
+                          Manager의 보안 암호 자동 교체 구성 활성화)
+                        </a>
+                      </h3>
+                    </div>
+                    <div className="bg-beige p-4 rounded-lg">
+                      <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                        {" "}
+                        <a
+                          href="/guide/iam/17"
+                          target="_blank"
+                          className="text-primary-dark hover:text-accent no-underline"
+                        >
+                          5. 퇴직자 계정 권한 철회(ex. 콘솔 로그인 프로필,
+                          액세스 키, 연결된 권한 정책, MFA, 인증서, 서비스
+                          자격증명을 모두 삭제/해제)
+                        </a>
+                      </h3>
+                    </div>
+                    <div className="bg-beige p-4 rounded-lg">
+                      <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                        {" "}
+                        <a
+                          href="/guide/iam/17"
+                          target="_blank"
+                          className="text-primary-dark hover:text-accent no-underline"
+                        >
+                          6. 퇴직자 계정 활동 모니터링 및 로그 관리 운영체계
+                          수립(ex. ConsoleLogin, CreateAccessKey 등의 잔여된
+                          의심 활동을 탐지하기 위한 CloudTrail 쿼리 작성)
+                        </a>
+                      </h3>
+                    </div>
+                  </>
+                )}
+                {(manualCheckFilter === "all" ||
+                  manualCheckFilter === "vpc") && (
+                  <div className="bg-beige p-4 rounded-lg">
+                    <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                      {" "}
+                      <a
+                        href="/guide/vpc/20"
+                        target="_blank"
+                        className="text-primary-dark hover:text-accent no-underline"
+                      >
+                        7.외부 노출이 강력히 제한되어야 하는 내부 네트워크 운영
+                        시, 배스천 호스트 구축
+                      </a>
+                    </h3>
+                  </div>
+                )}
+                {(manualCheckFilter === "all" ||
+                  manualCheckFilter === "lambda") && (
+                  <>
+                    <div className="bg-beige p-4 rounded-lg">
+                      <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                        {" "}
+                        <a
+                          href="/guide/lambda/21"
+                          target="_blank"
+                          className="text-primary-dark hover:text-accent no-underline"
+                        >
+                          8. Lambda 함수 실행 시, 환경 변수를 KMS의 고객 마스터
+                          키로 사용
+                        </a>
+                      </h3>
+                    </div>
+                    <div className="bg-beige p-4 rounded-lg">
+                      <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                        {" "}
+                        <a
+                          href="/guide/lambda/22"
+                          target="_blank"
+                          className="text-primary-dark hover:text-accent no-underline"
+                        >
+                          9. Lambda 함수에 결함이 존재하는 코드 스캔(ex.
+                          Inspector 연동 및 사용 후 결과에서 심각도 HIGH,
+                          CRITICAL 미포함)
+                        </a>
+                      </h3>
+                    </div>
+                  </>
+                )}
+                {(manualCheckFilter === "all" ||
+                  manualCheckFilter === "cloudtrail") && (
+                  <div className="bg-beige p-4 rounded-lg">
+                    <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                      {" "}
+                      <a
+                        href="/guide/cloudtrail/26"
+                        target="_blank"
+                        className="text-primary-dark hover:text-accent no-underline"
+                      >
+                        10. 비정상적인 API 호출 모니터링 및 로그 관리 운영체계
+                        수립(ex. 대량 호출 RunInstances를 탐지 가능한 CloudTrail
+                        쿼리 작성)
+                      </a>
+                    </h3>
+                  </div>
+                )}
+                {(manualCheckFilter === "all" ||
+                  manualCheckFilter === "eks") && (
+                  <div className="bg-beige p-4 rounded-lg">
+                    <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                      {" "}
+                      <a
+                        href="/guide/eks/27"
+                        target="_blank"
+                        className="text-primary-dark hover:text-accent no-underline"
+                      >
+                        11. EKS 사용 시, 쿠버네티스의 서비스 계정별로 IAM 역할
+                        할당
+                      </a>
+                    </h3>
+                  </div>
+                )}
+                {(manualCheckFilter === "all" ||
+                  manualCheckFilter === "kms") && (
+                  <>
+                    <div className="bg-beige p-4 rounded-lg">
+                      <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                        {" "}
+                        <a
+                          href="/guide/kms/28"
+                          target="_blank"
+                          className="text-primary-dark hover:text-accent no-underline"
+                        >
+                          12. KMS에서 외부 고객 관리형 키 Reimport/삭제 시, 키
+                          정책 속 Action은 특정 권한으로 제한되어 있고,
+                          Resource는 해당 고객 관리형 키의 ARN으로 제한하고,
+                          MFA를 강제
+                        </a>
+                      </h3>
+                    </div>
+                    <div className="bg-beige p-4 rounded-lg">
+                      <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                        {" "}
+                        <a
+                          href="/guide/kms/28"
+                          target="_blank"
+                          className="text-primary-dark hover:text-accent no-underline"
+                        >
+                          13. KMS에서 외부 고객 관리형 키의 키 정책 속
+                          Principal의 KMS 관련 고위험 권한(ex.
+                          kms:ImportKeyMaterial, kms:decrypt)을 특정 고객 관리형
+                          키의 역할 ARN으로 제한
+                        </a>
+                      </h3>
+                    </div>
+                  </>
+                )}
+                {(manualCheckFilter === "all" ||
+                  manualCheckFilter === "route53") && (
+                  <div className="bg-beige p-4 rounded-lg">
+                    <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                      {" "}
+                      <a
+                        href="/guide/route53/31"
+                        target="_blank"
+                        className="text-primary-dark hover:text-accent no-underline"
+                      >
+                        14. Route 53 레코드에 실제 소유/운영 중인 리소스만 존재
+                      </a>
+                    </h3>
+                  </div>
+                )}
+                {(manualCheckFilter === "all" ||
+                  manualCheckFilter === "organizations") && (
+                  <>
+                    <div className="bg-beige p-4 rounded-lg">
+                      <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                        {" "}
+                        <a
+                          href="/guide/organizations/32"
+                          target="_blank"
+                          className="text-primary-dark hover:text-accent no-underline"
+                        >
+                          15. Organizations의 신뢰할 수 있는 액세스가 업무상
+                          필요한 서비스에만 활성화
+                        </a>
+                      </h3>
+                    </div>
+                    <div className="bg-beige p-4 rounded-lg">
+                      <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                        {" "}
+                        <a
+                          href="/guide/organizations/33"
+                          target="_blank"
+                          className="text-primary-dark hover:text-accent no-underline"
+                        >
+                          16. Organizations SCP 정책 속 불필요한 API(ex.
+                          ModifyReservedInstances, aws-marketplace:Subscribe)에
+                          대해 Deny로 설정
+                        </a>
+                      </h3>
+                    </div>
+                  </>
+                )}
                 <div className="bg-beige p-4 rounded-lg">
-                  <h3 className="font-bold text-lg mb-3">
-                    1️⃣ IAM 패스워드 정책
+                  <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                    {" "}
+                    <a
+                      href="/guide/cognito/38"
+                      target="_blank"
+                      className="text-primary-dark hover:text-accent no-underline"
+                    >
+                      17. Cognito Identity Pool에 연결된 IAM 역할 정책 속
+                      Action은 필요 권한으로, Resource는 해당 역할이 접근 가능한
+                      리소스의 ARN으로, Condition은 비인증(Unauthenticated)
+                      역할에 대한 민감 리소스 접근 권한을 제한
+                    </a>
                   </h3>
-                  <ul className="list-disc ml-6 mt-2 space-y-1">
-                    <li>AWS 콘솔에서 IAM → 계정 설정 → 암호 정책 확인 필요</li>
-                  </ul>
                 </div>
                 <div className="bg-beige p-4 rounded-lg">
-                  <h3 className="font-bold text-lg mb-3">2️⃣ MFA 활성화 여부</h3>
-                  <ul className="list-disc ml-6 mt-2 space-y-1">
-                    <li>
-                      루트 계정 및 IAM 사용자의 MFA 설정 상태 수동 확인 필요
-                    </li>
-                  </ul>
+                  <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                    {" "}
+                    <a
+                      href="/guide/cognito/38"
+                      target="_blank"
+                      className="text-primary-dark hover:text-accent no-underline"
+                    >
+                      18. Cognito를 통한 사용자 관리 시, 내부 서비스거나 관리자
+                      계정만 발급해야 하는 경우 Self Sign Up 비활성화
+                    </a>
+                  </h3>
                 </div>
                 <div className="bg-beige p-4 rounded-lg">
-                  <h3 className="font-bold text-lg mb-3">
-                    3️⃣ CloudTrail 로그 무결성 검증
+                  <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                    {" "}
+                    <a
+                      href="/guide/cognito/39"
+                      target="_blank"
+                      className="text-primary-dark hover:text-accent no-underline"
+                    >
+                      19. 조직 내 Service Catalog 포트폴리오 공유가 필요한 경우,
+                      조직 전체에 AcceptPortfolioShare 차단하는 SCP 정책 작성 및
+                      조직 구조 내의 공유 방법 선택
+                    </a>
                   </h3>
-                  <ul className="list-disc ml-6 mt-2 space-y-1">
-                    <li>로그 파일 검증 활성화 여부 콘솔에서 확인 필요</li>
-                  </ul>
                 </div>
                 <div className="bg-beige p-4 rounded-lg">
-                  <h3 className="font-bold text-lg mb-3">
-                    4️⃣ 네트워크 ACL 규칙
+                  <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                    {" "}
+                    <a
+                      href="/guide/servicecatalog/46"
+                      target="_blank"
+                      className="text-primary-dark hover:text-accent no-underline"
+                    >
+                      20. Service Catalog 제약 조건 생성 시 할당하는 IAM 역할에
+                      Principal은 Service Catalog 서비스 지정, Action은 고위험
+                      권한(ex. iam:CreatePolicy, iam:AttachRolePolicy) Deny,
+                      Condition은 호출 출처 제한
+                    </a>
                   </h3>
-                  <ul className="list-disc ml-6 mt-2 space-y-1">
-                    <li>
-                      VPC 네트워크 ACL의 인바운드/아웃바운드 규칙 수동 검토 필요
-                    </li>
-                  </ul>
                 </div>
                 <div className="bg-beige p-4 rounded-lg">
-                  <h3 className="font-bold text-lg mb-3">
-                    5️⃣ 리소스 태그 정책 준수
+                  <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                    {" "}
+                    <a
+                      href="/guide/ses/49"
+                      target="_blank"
+                      className="text-primary-dark hover:text-accent no-underline"
+                    >
+                      21. SES 고위험 권한(ex. SendEmail, PutAccountDetails)을
+                      승인된 관리자 또는 서비스 전용 IAM 역할에만 허용
+                    </a>
                   </h3>
-                  <ul className="list-disc ml-6 mt-2 space-y-1">
-                    <li>조직의 태그 정책 준수 여부는 수동 확인 필요</li>
-                  </ul>
+                </div>
+                <div className="bg-beige p-4 rounded-lg">
+                  <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                    {" "}
+                    <a
+                      href="/guide/appstream2.0/50"
+                      target="_blank"
+                      className="text-primary-dark hover:text-accent no-underline"
+                    >
+                      22. AppStream의 Fleet/이미지 빌더에 연결된 IAM 역할 정책
+                      속 Resource를 특정 IAM 역할의 ARN으로 제한
+                    </a>
+                  </h3>
                 </div>
               </div>
             </div>
@@ -502,7 +834,7 @@ export default function AuditCheck() {
             >
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold text-primary-dark">
-                  점검용 IAM role 생성 가이드
+                  📑 점검용 IAM role 생성 가이드
                 </h2>
                 <div className="flex items-center gap-3">
                   <a
@@ -522,7 +854,7 @@ export default function AuditCheck() {
               </div>
               <div className="space-y-6 text-gray-700">
                 <div className="bg-beige p-4 rounded-lg">
-                  <h3 className="font-bold text-lg mb-3">
+                  <h3 className="font-bold text-lg leading-relaxed flex items-center">
                     1️⃣ External ID 확인 & 복사
                   </h3>
                   <div className="bg-gray-100 rounded p-4 mb-2">
@@ -537,7 +869,7 @@ export default function AuditCheck() {
                   </ul>
                 </div>
                 <div className="bg-beige p-4 rounded-lg">
-                  <h3 className="font-bold text-lg mb-3">
+                  <h3 className="font-bold text-lg leading-relaxed flex items-center">
                     2️⃣ yaml파일 다운 및 수정
                   </h3>
                   <div className="bg-gray-100 rounded p-4 mb-2">
@@ -556,7 +888,7 @@ export default function AuditCheck() {
                   </ul>
                 </div>
                 <div className="bg-beige p-4 rounded-lg">
-                  <h3 className="font-bold text-lg mb-3">
+                  <h3 className="font-bold text-lg leading-relaxed flex items-center">
                     3️⃣ CloudFormation 접속
                   </h3>
                   <div className="bg-gray-100 rounded p-4 mb-2">
@@ -573,7 +905,9 @@ export default function AuditCheck() {
                   </ul>
                 </div>
                 <div className="bg-beige p-4 rounded-lg">
-                  <h3 className="font-bold text-lg mb-3">4️⃣ 새 리소스 생성</h3>
+                  <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                    4️⃣ 새 리소스 생성
+                  </h3>
                   <div className="bg-gray-100 rounded p-4 mb-2">
                     <img
                       src="/img/rolecreate/role-4.png"
@@ -586,7 +920,9 @@ export default function AuditCheck() {
                   </ul>
                 </div>
                 <div className="bg-beige p-4 rounded-lg">
-                  <h3 className="font-bold text-lg mb-3">5️⃣ 스택생성</h3>
+                  <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                    5️⃣ 스택생성
+                  </h3>
                   <div className="bg-gray-100 rounded p-4 mb-2">
                     <img
                       src="/img/rolecreate/role-5.png"
@@ -604,7 +940,7 @@ export default function AuditCheck() {
                   </ul>
                 </div>
                 <div className="bg-beige p-4 rounded-lg">
-                  <h3 className="font-bold text-lg mb-3">
+                  <h3 className="font-bold text-lg leading-relaxed flex items-center">
                     6️⃣ 스택 세부 정보 지정
                   </h3>
                   <div className="bg-gray-100 rounded p-4 mb-2">
@@ -620,7 +956,9 @@ export default function AuditCheck() {
                   </ul>
                 </div>
                 <div className="bg-beige p-4 rounded-lg">
-                  <h3 className="font-bold text-lg mb-3">7️⃣ 스택 옵션 구성</h3>
+                  <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                    7️⃣ 스택 옵션 구성
+                  </h3>
                   <div className="bg-gray-100 rounded p-4 mb-2">
                     <img
                       src="/img/rolecreate/role-7.png"
@@ -634,7 +972,9 @@ export default function AuditCheck() {
                   </ul>
                 </div>
                 <div className="bg-beige p-4 rounded-lg">
-                  <h3 className="font-bold text-lg mb-3">8️⃣ 검토 & 생성</h3>
+                  <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                    8️⃣ 검토 & 생성
+                  </h3>
                   <div className="bg-gray-100 rounded p-4 mb-2">
                     <img
                       src="/img/rolecreate/role-8.png"
@@ -648,7 +988,10 @@ export default function AuditCheck() {
                   </ul>
                 </div>
                 <div className="bg-beige p-4 rounded-lg">
-                  <h3 className="font-bold text-lg mb-3"> 9️⃣ 생성 완료 확인</h3>
+                  <h3 className="font-bold text-lg leading-relaxed flex items-center">
+                    {" "}
+                    9️⃣ 생성 완료 확인
+                  </h3>
                   <div className="bg-gray-100 rounded p-4 mb-2">
                     <img
                       src="/img/rolecreate/role-9.png"
@@ -661,7 +1004,7 @@ export default function AuditCheck() {
                   </ul>
                 </div>
                 <div className="bg-beige p-4 rounded-lg">
-                  <h3 className="font-bold text-lg mb-3">
+                  <h3 className="font-bold text-lg leading-relaxed flex items-center">
                     🔟 리소스 탭에서 IAM Role 확인
                   </h3>
                   <div className="bg-gray-100 rounded p-4 mb-2">
