@@ -220,7 +220,7 @@ export default function AuditCheck() {
                   type="text"
                   value={externalId}
                   onChange={(e) => setExternalId(e.target.value)}
-                  placeholder="clouddoctor-your-uuid"
+                  placeholder="확인 & 복사 버튼으로 UUID 생성"
                   required
                   className="flex-1 px-4 py-2 rounded bg-white/20 text-white placeholder-white/50"
                 />
