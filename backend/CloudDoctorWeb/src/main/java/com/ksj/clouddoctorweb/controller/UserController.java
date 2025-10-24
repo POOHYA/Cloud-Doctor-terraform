@@ -93,11 +93,8 @@ public class UserController {
             auditRequest.put("external_id", request.getExternalId());
             auditRequest.put("checks", request.getChecks());
             
-            // HTTP 요청 전송 (타임아웃 설정)
+            // HTTP 요청 전송
             RestTemplate restTemplate = new RestTemplate();
-            restTemplate.getRequestFactory().setConnectTimeout(30000); // 30초
-            restTemplate.getRequestFactory().setReadTimeout(300000);   // 5분
-            
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(auditRequest, headers);
