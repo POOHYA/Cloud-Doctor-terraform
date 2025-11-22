@@ -1,0 +1,134 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  CloudDoctor 고객사용 Audit Role
+  - 권한정책: 읽기 전용/점검용
+  - 신뢰정책: CloudDoctor SaaS 계정에서 sts:AssumeRole 허용 (ExternalId 포함)
+
+Parameters:
+  ExternalId:
+    Type: String
+    Description: CloudDoctor SaaS에서 제공한 고객별 External ID 값을 입력하세요.
+
+Resources:
+  CloudDoctorAuditRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: CloudDoctorAuditRole
+      Description: Role for CloudDoctor SaaS to perform security audit in customer account
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              "AWS": "arn:aws:iam::346448660196:user/clouddoctor"
+            Action: "sts:AssumeRole"
+            Condition:
+              StringEquals:
+                sts:ExternalId: "<고객-ExternalID>"
+
+      Policies:
+        - PolicyName: CloudDoctorAuditPermissions
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: CloudDoctorAuditPermissions
+                Effect: Allow
+                Action:
+                  - iam:GetAccountSummary
+                  - iam:ListUsers
+                  - iam:GetUser
+                  - iam:ListUserPolicies
+                  - iam:GetUserPolicy
+                  - iam:ListAccessKeys
+                  - iam:ListPolicies
+                  - iam:GetAccessKeyLastUsed
+                  - iam:ListRoles
+                  - iam:GetRole
+                  - iam:ListRolePolicies
+                  - iam:GetRolePolicy
+                  - iam:ListAttachedUserPolicies
+                  - iam:ListAttachedRolePolicies
+                  - iam:GetPolicy
+                  - iam:GetPolicyVersion
+                  - iam:ListInstanceProfiles
+                  - iam:ListInstanceProfilesForRole
+
+                  - ec2:Describe*
+                  - s3:ListAllMyBuckets
+                  - s3:GetBucketAcl
+                  - s3:GetBucketPolicy
+                  - s3:GetBucketPublicAccessBlock
+                  - s3:GetBucketPolicyStatus
+                  - s3:GetBucketLocation
+                  - s3:GetBucketLogging
+                  - s3:GetReplicationConfiguration
+                  - s3:GetEncryptionConfiguration
+
+                  - kms:ListKeys
+                  - kms:DescribeKey
+                  - kms:GetKeyPolicy
+
+                  - cloudtrail:DescribeTrails
+                  - cloudtrail:GetEventSelectors
+                  - cloudtrail:GetTrailStatus
+
+                  - cloudformation:DescribeStacks
+                  - rds:Describe*
+                  - sns:ListTopics
+                  - sns:GetTopicAttributes
+
+                  - cognito-idp:ListUserPools
+                  - cognito-idp:DescribeUserPool
+                  - cognito-idp:ListUserPoolClients
+                  - cognito-idp:DescribeUserPoolClient
+
+                  - guardduty:ListDetectors
+                  - guardduty:GetDetector
+                  - guardduty:ListFindings
+                  - guardduty:GetFindings
+
+                  - es:ListDomainNames
+                  - es:DescribeElasticsearchDomains
+                  - es:DescribeDomain
+
+                  - organizations:ListPolicies
+                  - organizations:ListAccounts
+                  - organizations:ListRoots
+                  - organizations:ListOrganizationalUnitsForParent
+                  - organizations:ListChildren
+
+                  - sqs:ListQueues
+                  - sqs:GetQueueAttributes
+
+                  - ses:ListIdentities
+                  - ses:GetIdentityPolicy
+                  - ses:ListIdentityPolicies
+
+                  - ecr:DescribeRepositories
+                  - ecr:ListImages
+                  - ecr:DescribeImages
+
+                  - redshift:DescribeClusters
+                  - redshift:DescribeClusterSubnetGroups
+                  - redshift:DescribeClusterSecurityGroups
+
+                  - ssm:ListDocuments
+                  - ssm:GetDocument
+                  - ssm:ListCommandInvocations
+                  - ssm:ListCommands
+
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
+                  - logs:GetLogEvents
+
+                  - lambda:ListFunctions
+                  - lambda:GetFunctionConfiguration
+                Resource: "*"
+
+Outputs:
+  RoleName:
+    Description: 생성된 IAM Role 이름
+    Value: !Ref CloudDoctorAuditRole
+  RoleArn:
+    Description: 생성된 IAM Role의 ARN
+    Value: !GetAtt CloudDoctorAuditRole.Arn

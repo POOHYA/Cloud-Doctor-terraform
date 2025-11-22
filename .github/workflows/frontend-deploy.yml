@@ -1,0 +1,92 @@
+name: Frontend Deploy to Private Subnet
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      BASTION_PUBLIC_IP: ${{ secrets.BASTION_PUBLIC_IP }}
+      FRONTEND_PRIVATE_IP: ${{ secrets.FRONTEND_PRIVATE_IP }}
+
+    steps:
+      # 1️⃣ 코드 체크아웃
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2️⃣ Node.js 환경 설정
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      # 3️⃣ 패키지 설치 및 빌드
+      - name: Install dependencies and build
+        working-directory: frontend/cloud-doctor
+        env:
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+          REACT_APP_AUDIT_API_URL: ${{ secrets.REACT_APP_AUDIT_API_URL }}
+        run: |
+          npm ci
+          CI=false npm run build
+
+      # 4️⃣ 빌드 파일 압축
+      - name: Create build archive
+        run: |
+          cd frontend/cloud-doctor
+          tar -czf build.tar.gz -C build .
+
+      # 5️⃣ Bastion 서버로 빌드 파일 업로드
+      - name: Copy build files to Bastion
+        uses: appleboy/scp-action@v0.1.5
+        with:
+          host: ${{ secrets.BASTION_PUBLIC_IP }}
+          username: ubuntu
+          key: ${{ secrets.BASTION_SSH_KEY }}
+          source: "frontend/cloud-doctor/build.tar.gz"
+          target: "/home/ubuntu/"
+
+      # 6️⃣ Bastion에서 Private EC2로 전송 및 배포
+      - name: Deploy on Private EC2 via Bastion
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.BASTION_PUBLIC_IP }}
+          username: ubuntu
+          key: ${{ secrets.BASTION_SSH_KEY }}
+          script: |
+            # 1. Private EC2로 전송
+            scp -i /home/ubuntu/private-cloud-doctor.pem -o StrictHostKeyChecking=no /home/ubuntu/frontend/cloud-doctor/build.tar.gz ubuntu@${{ secrets.FRONTEND_PRIVATE_IP }}:/home/ubuntu/
+
+            # 2. Private EC2에서 배포
+            ssh -i /home/ubuntu/private-cloud-doctor.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.FRONTEND_PRIVATE_IP }} << EOF
+              # 기존 파일 백업
+              sudo mkdir -p /var/www/html/backup
+              sudo cp -r /var/www/html/* /var/www/html/backup/ 2>/dev/null || true
+              
+              # 새 빌드 파일 배포
+              sudo rm -rf /var/www/html/*
+              cd /home/ubuntu
+              
+              # 임시 디렉토리 생성 및 압축 해제
+              mkdir -p ~/temp_build
+              tar -xzf build.tar.gz -C ~/temp_build/
+              
+              # 파일 복사 및 권한 설정
+              sudo cp -r ~/temp_build/* /var/www/html/
+              sudo chown -R www-data:www-data /var/www/html
+              sudo chmod -R 755 /var/www/html
+              
+              # Nginx 재시작
+              sudo systemctl reload nginx
+              
+              # 임시 파일 정리
+              rm -f /home/ubuntu/build.tar.gz
+              rm -rf ~/temp_build
+            EOF

@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: clouddoctor-postgres
+    environment:
+      POSTGRES_DB: clouddoctor
+      POSTGRES_USER: clouddoctor
+      POSTGRES_PASSWORD: password123
+    ports:
+      - "35432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: clouddoctor-redis
+    command: redis-server --requirepass password123
+    ports:
+      - "36379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:

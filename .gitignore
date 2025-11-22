@@ -1,0 +1,10 @@
+### .pem and key files (except localhost certificates)
+*.pem
+*.key
+!frontend/cloud-doctor/localhost.pem
+!frontend/cloud-doctor/localhost-key.pem
+
+### Environment files
+.env
+.env.local
+.env.production
