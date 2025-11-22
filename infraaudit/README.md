@@ -26,10 +26,29 @@ infraaudit/
 │   ├── services/
 │   │   └── audit_service.py        # 보안 점검 서비스 로직
 │   ├── checks/
-│   │   ├── base_check.py           # 점검 베이스 클래스
-│   │   ├── iam_checks.py           # IAM 보안 점검
-│   │   ├── s3_checks.py            # S3 보안 점검
-│   │   └── ec2_checks.py           # EC2 보안 점검
+│   │   ├── appstream_checks.py         # Appstream 보안 점검
+│   │   ├── base_check.py               # 점검 베이스 클래스
+│   │   ├── bedrock_checks.py           # Bedrock 보안 점검
+│   │   ├── cloudformation_check.py     # Cloudformation 보안 점검
+│   │   ├── cognito_check.py            # Cognito 보안 점검
+│   │   ├── documentdb_check.py         # Documentdb 보안 점검
+│   │   ├── ec2_checks.py               # EC2 보안 점검
+│   │   ├── ecr_checks.py               # ECR 보안 점검
+│   │   ├── eks_checks.py               # EKS 보안 점검
+│   │   ├── elasticbeanstalk_check.py   # Elasticbeanstalk 보안 점검
+│   │   ├── glue_check.py               # Glue 보안 점검
+│   │   ├── guardduty_checks.py         # Guardduty 보안 점검
+│   │   ├── iam_checks.py               # IAM 보안 점검
+│   │   ├── kms_checks.py               # KMS 보안 점검
+│   │   ├── opensearch_checks.py        # Opensearch 보안 점검
+│   │   ├── organizations_check.py      # Organizations 보안 점검
+│   │   ├── rds_check.py                # RDS 보안 점검
+│   │   ├── redshift_checks.py          # Redshift 보안 점검
+│   │   ├── s3_checks.py                # S3 보안 점검
+│   │   ├── ses_checks.py               # SES 보안 점검
+│   │   ├── sns_check.py                # SNS 보안 점검
+│   │   ├── sqs_check.py                # SQS 보안 점검
+│   │   └── ssm_checks.py               # SSM 보안 점검
 │   └── models/
 │       └── audit.py                # Pydantic 모델
 └── tests/
