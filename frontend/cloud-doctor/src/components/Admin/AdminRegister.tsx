@@ -1,4 +1,4 @@
-import { useState } from "React";
+import { useState } from "react";
 
 interface AdminRegisterProps {
   onSwitchToLogin: () => void;
