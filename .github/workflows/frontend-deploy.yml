@@ -22,7 +22,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 3️⃣ AWS OIDC 인증 (Access Key 없이 Role ARN 사용)
+      # 3️⃣ AWS OIDC 인증
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
@@ -50,7 +50,6 @@ jobs:
         run: |
           cd frontend/cloud-doctor/build
           tar -czf ../../../build.tar.gz .
-          # 루트 경로로 압축파일 이동 확인
 
       # 7️⃣ Bastion 서버로 빌드 파일 업로드
       - name: Copy build files to Bastion
@@ -62,48 +61,68 @@ jobs:
           source: "build.tar.gz"
           target: "/home/ubuntu/"
 
-      # 8️⃣ Bastion에서 2대의 Private EC2로 순차 배포
-      - name: Deploy on Multiple Private EC2 via Bastion
+      # 8️⃣ Bastion에서 실시간 ASG 인스턴스 IP 조회 및 순차 배포
+      - name: Deploy to Dynamic ASG Instances via Bastion
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.BASTION_PUBLIC_IP }}
           username: ubuntu
           key: ${{ secrets.BASTION_SSH_KEY }}
           script: |
-            # 프론트엔드 서버 IP 리스트 정의 (Secrets에 등록 필요)
-            FE_SERVERS=("${{ secrets.FE_SERVER_1_IP }}" "${{ secrets.FE_SERVER_2_IP }}")
+            # ASG_NAME은 GitHub Secrets에 등록한 프론트엔드 Auto Scaling Group 이름입니다.
+            ASG_NAME="${{ secrets.FE_ASG_NAME }}"
             
-            for IP in "${FE_SERVERS[@]}"; do
+            echo "🔍 ASG [$ASG_NAME]에서 'InService' 상태인 인스턴스 IP를 찾는 중..."
+            
+            # 1. ASG에 속한 인스턴스 ID 리스트 가져오기
+            INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
+              --auto-scaling-group-names "$ASG_NAME" \
+              --region ap-northeast-2 \
+              --query 'AutoScalingGroups[0].Instances[?LifecycleState==`InService`].InstanceId' \
+              --output text)
+            
+            if [ -z "$INSTANCE_IDS" ] || [ "$INSTANCE_IDS" == "None" ]; then
+              echo "❌ 배포할 수 있는 인서비즈 상태의 인스턴스가 없습니다."
+              exit 1
+            fi
+
+            # 2. 인스턴스 ID들을 이용해 각각의 Private IP 조회
+            SERVER_IPS=$(aws ec2 describe-instances \
+              --instance-ids $INSTANCE_IDS \
+              --region ap-northeast-2 \
+              --query 'Reservations[*].Instances[*].PrivateIpAddress' \
+              --output text)
+
+            echo "📍 찾아낸 배포 대상 IP: $SERVER_IPS"
+
+            # 3. 조회된 IP들을 순회하며 배포 진행
+            for IP in $SERVER_IPS; do
               echo "------------------------------------------------"
-              echo "🚀 프론트엔드 서버 배포 시작: $IP"
+              echo "🚀 타겟 서버 배포 시작: $IP"
               echo "------------------------------------------------"
 
-              # 1. Bastion에서 해당 Private EC2로 압축 파일 전송
+              # Bastion에서 해당 Private EC2로 파일 복사
               scp -i /home/ubuntu/private-cloud-doctor.pem -o StrictHostKeyChecking=no /home/ubuntu/build.tar.gz ubuntu@$IP:/home/ubuntu/
 
-              # 2. 해당 Private EC2 내부 접속 후 Nginx 경로에 배포
+              # Private EC2 내부 접속 후 배포 로직 실행
               ssh -i /home/ubuntu/private-cloud-doctor.pem -o StrictHostKeyChecking=no ubuntu@$IP << 'EOF'
-                # 임시 작업 디렉토리 생성
+                # 임시 디렉토리 생성 및 압축 해제
                 mkdir -p ~/temp_build
-                
-                # 압축 해제
                 tar -xzf ~/build.tar.gz -C ~/temp_build/
                 
-                # 기존 파일 삭제 및 새 파일 복사 (권한 유지 위해 sudo 사용)
+                # 기존 파일 교체 및 권한 설정
                 sudo rm -rf /var/www/html/*
                 sudo cp -r ~/temp_build/* /var/www/html/
-                
-                # Nginx가 읽을 수 있도록 권한 설정
                 sudo chown -R www-data:www-data /var/www/html
                 sudo chmod -R 755 /var/www/html
                 
-                # Nginx 설정 반영 (재시작보다 가벼운 reload)
+                # 서비스 반영
                 sudo systemctl reload nginx
                 
                 # 정리
                 rm -f ~/build.tar.gz
                 rm -rf ~/temp_build
             EOF
-              echo "✅ 서버 배포 완료: $IP"
+              echo "✅ 서버 배포 성공: $IP"
               sleep 5
             done
