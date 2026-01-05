@@ -62,7 +62,7 @@ jobs:
           username: ec2-user
           key: ${{ secrets.BASTION_SSH_KEY }}
           source: "build.tar.gz"
-          target: "/home/ubuntu/"
+          target: "/home/ec2-user/"
 
       # 8️⃣ Bastion에서 실시간 ASG 인스턴스 IP 조회 및 순차 배포
       - name: Deploy to Dynamic ASG Instances via Bastion
@@ -105,10 +105,10 @@ jobs:
               echo "------------------------------------------------"
 
               # Bastion에서 해당 Private EC2로 파일 복사
-              scp -i /home/ubuntu/private-cloud-doctor.pem -o StrictHostKeyChecking=no /home/ubuntu/build.tar.gz ubuntu@$IP:/home/ubuntu/
+              scp -i /home/ec2-user/private-cloud-doctor.pem -o StrictHostKeyChecking=no /home/ec2-user/build.tar.gz ubuntu@$IP:/home/ec2-user/
 
               # Private EC2 내부 접속 후 배포 로직 실행
-              ssh -i /home/ubuntu/private-cloud-doctor.pem -o StrictHostKeyChecking=no ubuntu@$IP << 'EOF'
+              ssh -i /home/ec2-user/private-cloud-doctor.pem -o StrictHostKeyChecking=no ubuntu@$IP << 'EOF'
                 # 임시 디렉토리 생성 및 압축 해제
                 mkdir -p ~/temp_build
                 tar -xzf ~/build.tar.gz -C ~/temp_build/
