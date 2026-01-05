@@ -1,4 +1,4 @@
-name: Backend Deploy (ECR)
+name: Backend Deploy (ECR + ASG)
 
 on:
   workflow_dispatch:
@@ -13,18 +13,6 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
-    env:
-      PGSQL_URL: ${{ secrets.PGSQL_URL }}
-      PGSQL_USERNAME: ${{ secrets.PGSQL_USERNAME }}
-      PGSQL_PASSWORD: ${{ secrets.PGSQL_PASSWORD }}
-      REDIS_HOST: ${{ secrets.REDIS_HOST }}
-      REDIS_PORT: ${{ secrets.REDIS_PORT }}
-      REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
-      ACCESS_TOKEN_EXPIRATION: ${{ secrets.ACCESS_TOKEN_EXPIRATION }}
-      REFRESH_TOKEN_EXPIRATION: ${{ secrets.REFRESH_TOKEN_EXPIRATION }}
-      COOKIE_SECURE: true
-      INFRAAUDIT_API_URL: ${{ secrets.INFRAAUDIT_API_URL }}
 
     steps:
       - name: Checkout repository
@@ -51,37 +39,66 @@ jobs:
       - name: Build, tag, and push image to Amazon ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ secrets.ECR_BE_REPO_NAME }} # 예: cloud-doctor-backend
+          ECR_REPOSITORY: ${{ secrets.ECR_BE_REPO_NAME }}
           IMAGE_TAG: latest
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./backend/CloudDoctorWeb
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      # 5. Bastion을 통해 각 Private 서버에 배포 명령 전달
-      - name: Deploy to Multiple Private EC2 via Bastion
+      # 5. Bastion 접속 후 ASG 내 인스턴스 IP 스캔 및 순차 배포
+      - name: Deploy to Dynamic ASG Instances via Bastion
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.BASTION_PUBLIC_IP }}
           username: ubuntu
           key: ${{ secrets.BASTION_SSH_KEY }}
           script: |
-            SERVER_IPS=("${{ secrets.BE_SERVER_1_IP }}" "${{ secrets.BE_SERVER_2_IP }}")
+            # ASG 이름을 Secrets에서 가져옴
+            ASG_NAME="${{ secrets.BE_ASG_NAME }}"
+            ECR_REGISTRY="${{ steps.login-ecr.outputs.registry }}"
+            REPO_NAME="${{ secrets.ECR_BE_REPO_NAME }}"
             
-            for IP in "${SERVER_IPS[@]}"; do
-              echo "🚀 $IP 서버에 ECR 이미지 배포 중..."
+            echo "🔍 ASG [$ASG_NAME]에서 실행 중인 인스턴스를 찾는 중..."
+            
+            # 1. 현재 InService 상태인 인스턴스 ID 조회
+            INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
+              --auto-scaling-group-names "$ASG_NAME" \
+              --region ap-northeast-2 \
+              --query 'AutoScalingGroups[0].Instances[?LifecycleState==`InService`].InstanceId' \
+              --output text)
+            
+            if [ -z "$INSTANCE_IDS" ] || [ "$INSTANCE_IDS" == "None" ]; then
+              echo "❌ 배포 가능한 인스턴스가 없습니다."
+              exit 1
+            fi
+
+            # 2. 인스턴스 ID로 Private IP 추출
+            SERVER_IPS=$(aws ec2 describe-instances \
+              --instance-ids $INSTANCE_IDS \
+              --region ap-northeast-2 \
+              --query 'Reservations[*].Instances[*].PrivateIpAddress' \
+              --output text)
+
+            echo "📍 찾아낸 배포 대상 IP: $SERVER_IPS"
+
+            # 3. 각 IP별로 순차 배포
+            for IP in $SERVER_IPS; do
+              echo "------------------------------------------------"
+              echo "🚀 백엔드 서버 배포 시작: $IP"
+              echo "------------------------------------------------"
               
-              ssh -i /home/ubuntu/private-cloud-doctor.pem -o StrictHostKeyChecking=no ubuntu@$IP << 'EOF'
-                # 1. ECR 로그인 (EC2 인스턴스 프로파일 권한 필요)
-                aws ecr get-login-password --region ap-northeast-2 | sudo docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
+              ssh -i /home/ubuntu/private-cloud-doctor.pem -o StrictHostKeyChecking=no ubuntu@$IP << EOF
+                # ECR 로그인
+                aws ecr get-login-password --region ap-northeast-2 | sudo docker login --username AWS --password-stdin $ECR_REGISTRY
                 
-                # 2. 최신 이미지 가져오기
-                sudo docker pull ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_BE_REPO_NAME }}:latest
+                # 최신 이미지 Pull
+                sudo docker pull $ECR_REGISTRY/$REPO_NAME:latest
                 
-                # 3. 기존 컨테이너 중지 및 삭제
+                # 기존 컨테이너 중지 및 제거
                 sudo docker stop cloud-doctor-backend || true
                 sudo docker rm cloud-doctor-backend || true
                 
-                # 4. 새 컨테이너 실행
+                # 새 컨테이너 실행 (환경변수 주입)
                 sudo docker run -d -p 9090:9090 \
                   -e PGSQL_URL="${{ secrets.PGSQL_URL }}" \
                   -e PGSQL_USERNAME="${{ secrets.PGSQL_USERNAME }}" \
@@ -95,9 +112,9 @@ jobs:
                   -e INFRAAUDIT_API_URL="${{ secrets.INFRAAUDIT_API_URL }}" \
                   --restart unless-stopped \
                   --name cloud-doctor-backend \
-                  ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_BE_REPO_NAME }}:latest
-                
-                # 5. 사용하지 않는 오래된 이미지 정리
+                  $ECR_REGISTRY/$REPO_NAME:latest
+                  
+                # 불필요한 이미지 정리
                 sudo docker image prune -f
             EOF
               echo "✅ 서버 배포 완료: $IP"
