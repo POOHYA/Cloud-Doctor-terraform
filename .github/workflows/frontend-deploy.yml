@@ -59,7 +59,7 @@ jobs:
         uses: appleboy/scp-action@v0.1.5
         with:
           host: ${{ secrets.BASTION_PUBLIC_IP }}
-          username: ubuntu
+          username: ec2-user
           key: ${{ secrets.BASTION_SSH_KEY }}
           source: "build.tar.gz"
           target: "/home/ubuntu/"
@@ -69,7 +69,7 @@ jobs:
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.BASTION_PUBLIC_IP }}
-          username: ubuntu
+          username: ec2-user
           key: ${{ secrets.BASTION_SSH_KEY }}
           script: |
             # ASG_NAME은 GitHub Secrets에 등록한 프론트엔드 Auto Scaling Group 이름입니다.
