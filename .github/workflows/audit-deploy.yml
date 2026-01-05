@@ -1,4 +1,4 @@
-name: Python Backend Deploy
+name: Python Backend Deploy (ECR)
 
 on:
   workflow_dispatch:
@@ -8,7 +8,6 @@ on:
     paths:
       - 'infraaudit/**'
 
-# 1️⃣ OIDC 토큰 사용을 위한 권한 설정 (추가 필수)
 permissions:
   id-token: write
   contents: read
@@ -16,64 +15,62 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      # 2️⃣ 코드 체크아웃
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 3️⃣ AWS OIDC 인증 (Access Key 없이 Role ARN 사용)
+      # 1. AWS OIDC 인증
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ap-northeast-2
 
-      # 4️⃣ Docker 이미지 빌드
-      - name: Build Docker image
-        working-directory: infraaudit
-        run: docker build -t infraaudit-backend -f Dockerfile .
+      # 2. AWS ECR 로그인
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-      # 5️⃣ Docker 이미지 TAR 저장
-      - name: Save Docker image to tar
+      # 3. Docker 이미지 빌드 및 ECR 푸시
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.ECR_PYTHON_REPO_NAME }} # ECR 레포지토리 이름
+          IMAGE_TAG: latest
         run: |
-          docker save infraaudit-backend -o infraaudit-backend.tar
-          chmod 644 infraaudit-backend.tar
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./infraaudit
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      # 6️⃣ Bastion 서버로 이미지 업로드
-      - name: Copy Docker image to Bastion
-        uses: appleboy/scp-action@v0.1.5
-        with:
-          host: ${{ secrets.BASTION_PUBLIC_IP }}
-          username: ubuntu
-          key: ${{ secrets.BASTION_SSH_KEY }}
-          source: "infraaudit-backend.tar"
-          target: "/home/ubuntu/"
-
-      # 7️⃣ Bastion에서 Private EC2로 전송 및 배포
-      - name: Deploy on Private EC2 via Bastion
+      # 4. Bastion을 통해 Private EC2에 접속하여 배포 명령 전달
+      - name: Deploy to Private EC2 via Bastion
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.BASTION_PUBLIC_IP }}
           username: ubuntu
           key: ${{ secrets.BASTION_SSH_KEY }}
           script: |
-            # 1. Private EC2로 전송
-            scp -i /home/ubuntu/private-cloud-doctor.pem -o StrictHostKeyChecking=no /home/ubuntu/infraaudit-backend.tar ubuntu@${{ secrets.PYTHON_PRIVATE_IP }}:/home/ubuntu/
-
-            # 2. Private EC2에서 배포
-            ssh -i /home/ubuntu/private-cloud-doctor.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.PYTHON_PRIVATE_IP }} << 'EOF'
-              # OIDC로 가져온 임시 자격 증명을 컨테이너에 전달
-              # (주의: step 3에서 인증했으므로 환경변수에 이미 설정되어 있음)
-              sudo docker load -i /home/ubuntu/infraaudit-backend.tar
-              sudo docker stop infraaudit-backend || true
-              sudo docker rm infraaudit-backend || true
-              sudo docker run -d -p 8000:8000 \
-                -e AWS_ACCESS_KEY_ID=${{ env.AWS_ACCESS_KEY_ID }} \
-                -e AWS_SECRET_ACCESS_KEY=${{ env.AWS_SECRET_ACCESS_KEY }} \
-                -e AWS_SESSION_TOKEN=${{ env.AWS_SESSION_TOKEN }} \
-                -e AWS_DEFAULT_REGION=ap-northeast-2 \
-                --restart unless-stopped \
-                --name infraaudit-backend \
-                infraaudit-backend
-            EOF
+            # 서버 IP 리스트 (ALB 대응을 위해 반복문 사용)
+            SERVER_IPS=("${{ secrets.PYTHON_SERVER_1_IP }}" "${{ secrets.PYTHON_SERVER_2_IP }}")
+            
+            for IP in "${SERVER_IPS[@]}"; do
+              echo "🚀 $IP 서버에 ECR 이미지 배포 중..."
+              
+              ssh -i /home/ubuntu/private-cloud-doctor.pem -o StrictHostKeyChecking=no ubuntu@$IP << 'EOF'
+                # ECR 로그인 (인스턴스 프로파일 권한 필요)
+                aws ecr get-login-password --region ap-northeast-2 | sudo docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
+                
+                # 최신 이미지 풀
+                sudo docker pull ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_PYTHON_REPO_NAME }}:latest
+                
+                # 기존 컨테이너 중지 및 삭제
+                sudo docker stop infraaudit-backend || true
+                sudo docker rm infraaudit-backend || true
+                
+                # 새 컨테이너 실행
+                # OIDC 임시 키 대신 'IAM 인스턴스 프로파일'을 사용하는 것이 보안상 훨씬 좋습니다.
+                sudo docker run -d -p 8000:8000 \
+                  --restart unless-stopped \
+                  --name infraaudit-backend \
+                  ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_PYTHON_REPO_NAME }}:latest
+              EOF
+            done
