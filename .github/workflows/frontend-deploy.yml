@@ -8,7 +8,7 @@ on:
     paths:
       - 'frontend/**'
 
-# 1️⃣ OIDC 권한 설정 (추가 필수)
+# 1️⃣ OIDC 권한 설정
 permissions:
   id-token: write
   contents: read
@@ -45,11 +45,12 @@ jobs:
           npm ci
           CI=false npm run build
 
-      # 6️⃣ 빌드 파일 압축
+      # 6️⃣ 빌드 파일 압축 (./build 안의 내용만 압축)
       - name: Create build archive
         run: |
-          cd frontend/cloud-doctor
-          tar -czf build.tar.gz -C build .
+          cd frontend/cloud-doctor/build
+          tar -czf ../../../build.tar.gz .
+          # 루트 경로로 압축파일 이동 확인
 
       # 7️⃣ Bastion 서버로 빌드 파일 업로드
       - name: Copy build files to Bastion
@@ -58,43 +59,51 @@ jobs:
           host: ${{ secrets.BASTION_PUBLIC_IP }}
           username: ubuntu
           key: ${{ secrets.BASTION_SSH_KEY }}
-          source: "frontend/cloud-doctor/build.tar.gz"
+          source: "build.tar.gz"
           target: "/home/ubuntu/"
 
-      # 8️⃣ Bastion에서 Private EC2로 전송 및 배포
-      - name: Deploy on Private EC2 via Bastion
+      # 8️⃣ Bastion에서 2대의 Private EC2로 순차 배포
+      - name: Deploy on Multiple Private EC2 via Bastion
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.BASTION_PUBLIC_IP }}
           username: ubuntu
           key: ${{ secrets.BASTION_SSH_KEY }}
           script: |
-            # 1. Private EC2로 전송 (경로 주의: scp source 위치 확인)
-            scp -i /home/ubuntu/private-cloud-doctor.pem -o StrictHostKeyChecking=no /home/ubuntu/frontend/cloud-doctor/build.tar.gz ubuntu@${{ secrets.FRONTEND_PRIVATE_IP }}:/home/ubuntu/
+            # 프론트엔드 서버 IP 리스트 정의 (Secrets에 등록 필요)
+            FE_SERVERS=("${{ secrets.FE_SERVER_1_IP }}" "${{ secrets.FE_SERVER_2_IP }}")
+            
+            for IP in "${FE_SERVERS[@]}"; do
+              echo "------------------------------------------------"
+              echo "🚀 프론트엔드 서버 배포 시작: $IP"
+              echo "------------------------------------------------"
 
-            # 2. Private EC2에서 배포 (EOF에 따옴표를 붙여 안전하게 실행)
-            ssh -i /home/ubuntu/private-cloud-doctor.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.FRONTEND_PRIVATE_IP }} << 'EOF'
-              # 기존 파일 백업
-              sudo mkdir -p /var/www/html/backup
-              sudo cp -r /var/www/html/* /var/www/html/backup/ 2>/dev/null || true
-              
-              # 새 빌드 파일 배포
-              sudo rm -rf /var/www/html/*
-              cd /home/ubuntu
-              
-              # 임시 디렉토리 생성 및 압축 해제
-              mkdir -p ~/temp_build
-              tar -xzf build.tar.gz -C ~/temp_build/
-              
-              # 파일 복사 및 권한 설정
-              sudo cp -r ~/temp_build/* /var/www/html/
-              sudo chown -R www-data:www-data /var/www/html
-              sudo chmod -R 755 /var/www/html
-              
-              # Nginx 재시작
-              sudo systemctl reload nginx
-              
-              # 임시 파일 정리
-              rm -f /home/ubuntu/build.tar.gz
-              rm -rf ~/temp_build
+              # 1. Bastion에서 해당 Private EC2로 압축 파일 전송
+              scp -i /home/ubuntu/private-cloud-doctor.pem -o StrictHostKeyChecking=no /home/ubuntu/build.tar.gz ubuntu@$IP:/home/ubuntu/
+
+              # 2. 해당 Private EC2 내부 접속 후 Nginx 경로에 배포
+              ssh -i /home/ubuntu/private-cloud-doctor.pem -o StrictHostKeyChecking=no ubuntu@$IP << 'EOF'
+                # 임시 작업 디렉토리 생성
+                mkdir -p ~/temp_build
+                
+                # 압축 해제
+                tar -xzf ~/build.tar.gz -C ~/temp_build/
+                
+                # 기존 파일 삭제 및 새 파일 복사 (권한 유지 위해 sudo 사용)
+                sudo rm -rf /var/www/html/*
+                sudo cp -r ~/temp_build/* /var/www/html/
+                
+                # Nginx가 읽을 수 있도록 권한 설정
+                sudo chown -R www-data:www-data /var/www/html
+                sudo chmod -R 755 /var/www/html
+                
+                # Nginx 설정 반영 (재시작보다 가벼운 reload)
+                sudo systemctl reload nginx
+                
+                # 정리
+                rm -f ~/build.tar.gz
+                rm -rf ~/temp_build
             EOF
+              echo "✅ 서버 배포 완료: $IP"
+              sleep 5
+            done
