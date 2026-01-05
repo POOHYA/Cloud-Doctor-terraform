@@ -9,7 +9,7 @@ on:
     branches:
       - main
     paths:
-      - 'frontend/**'
+      - "frontend/**"
 
 # 1️⃣ OIDC 권한 설정
 permissions:
@@ -36,7 +36,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: "20"
 
       # 5️⃣ 패키지 설치 및 빌드
       - name: Install dependencies and build
@@ -74,16 +74,16 @@ jobs:
           script: |
             # ASG_NAME은 GitHub Secrets에 등록한 프론트엔드 Auto Scaling Group 이름입니다.
             ASG_NAME="${{ secrets.FE_ASG_NAME }}"
-            
+
             echo "🔍 ASG [$ASG_NAME]에서 'InService' 상태인 인스턴스 IP를 찾는 중..."
-            
+
             # 1. ASG에 속한 인스턴스 ID 리스트 가져오기
             INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
               --auto-scaling-group-names "$ASG_NAME" \
               --region ap-northeast-2 \
               --query 'AutoScalingGroups[0].Instances[?LifecycleState==`InService`].InstanceId' \
               --output text)
-            
+
             if [ -z "$INSTANCE_IDS" ] || [ "$INSTANCE_IDS" == "None" ]; then
               echo "❌ 배포할 수 있는 인서비즈 상태의 인스턴스가 없습니다."
               exit 1
@@ -105,10 +105,10 @@ jobs:
               echo "------------------------------------------------"
 
               # Bastion에서 해당 Private EC2로 파일 복사
-              scp -i /home/ec2-user/private-cloud-doctor.pem -o StrictHostKeyChecking=no /home/ec2-user/build.tar.gz ubuntu@$IP:/home/ec2-user/
+              scp -i /home/ec2-user/private-cloud-doctor.pem -o StrictHostKeyChecking=no /home/ec2-user/build.tar.gz ec2-user@$IP:/home/ec2-user/
 
               # Private EC2 내부 접속 후 배포 로직 실행
-              ssh -i /home/ec2-user/private-cloud-doctor.pem -o StrictHostKeyChecking=no ubuntu@$IP << 'EOF'
+              ssh -i /home/ec2-user/private-cloud-doctor.pem -o StrictHostKeyChecking=no ec2-user@$IP << 'EOF'
                 # 임시 디렉토리 생성 및 압축 해제
                 mkdir -p ~/temp_build
                 tar -xzf ~/build.tar.gz -C ~/temp_build/
@@ -116,7 +116,7 @@ jobs:
                 # 기존 파일 교체 및 권한 설정
                 sudo rm -rf /var/www/html/*
                 sudo cp -r ~/temp_build/* /var/www/html/
-                sudo chown -R www-data:www-data /var/www/html
+                sudo chown -R nginx:nginx /var/www/html
                 sudo chmod -R 755 /var/www/html
                 
                 # 서비스 반영
