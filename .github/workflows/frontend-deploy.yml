@@ -102,8 +102,29 @@ jobs:
             sleep 30
           done
 
-      # 9️⃣ Bastion에서 실시간 ASG 인스턴스 IP 조회 및 순차 배포
-      - name: Deploy to Dynamic ASG Instances via Bastion
+      # 9️⃣ ASG 인스턴스 IP 조회
+      - name: Get ASG Instance IPs
+        id: get_ips
+        run: |
+          ASG_NAME="${{ secrets.FE_ASG_NAME }}"
+          
+          INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
+            --auto-scaling-group-names "$ASG_NAME" \
+            --region ap-northeast-2 \
+            --query 'AutoScalingGroups[0].Instances[?LifecycleState==`InService`].InstanceId' \
+            --output text)
+          
+          SERVER_IPS=$(aws ec2 describe-instances \
+            --instance-ids $INSTANCE_IDS \
+            --region ap-northeast-2 \
+            --query 'Reservations[*].Instances[*].PrivateIpAddress' \
+            --output text)
+          
+          echo "SERVER_IPS=$SERVER_IPS" >> $GITHUB_OUTPUT
+          echo "📍 배포 대상 IP: $SERVER_IPS"
+
+      # 🔟 Bastion을 통한 배포
+      - name: Deploy via Bastion
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.BASTION_PUBLIC_IP }}
@@ -111,32 +132,10 @@ jobs:
           key: ${{ secrets.BASTION_SSH_KEY }}
           script: |
             chmod 400 /home/ec2-user/private-cloud-doctor.pem
-
-            ASG_NAME="${{ secrets.FE_ASG_NAME }}"
-            echo "🔍 ASG에서 인스턴스 조회 중..."
-
-            INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
-              --auto-scaling-group-names "$ASG_NAME" \
-              --region ap-northeast-2 \
-              --query 'AutoScalingGroups[0].Instances[?LifecycleState==`InService`].InstanceId' \
-              --output text 2>&1)
-
-            echo "DEBUG: INSTANCE_IDS = $INSTANCE_IDS"
-
-            if [ -z "$INSTANCE_IDS" ] || [ "$INSTANCE_IDS" == "None" ]; then
-              echo "❌ 인스턴스를 찾을 수 없습니다."
-              exit 1
-            fi
-
-            SERVER_IPS=$(aws ec2 describe-instances \
-              --instance-ids $INSTANCE_IDS \
-              --region ap-northeast-2 \
-              --query 'Reservations[*].Instances[*].PrivateIpAddress' \
-              --output text 2>&1)
-
-            echo "DEBUG: SERVER_IPS = $SERVER_IPS"
+            
+            SERVER_IPS="${{ steps.get_ips.outputs.SERVER_IPS }}"
             echo "📍 배포 대상 IP: $SERVER_IPS"
-
+            
             for IP in $SERVER_IPS; do
               echo "------------------------------------------------"
               echo "🚀 배포 시작: $IP"
