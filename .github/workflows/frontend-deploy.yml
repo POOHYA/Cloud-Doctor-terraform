@@ -64,15 +64,17 @@ jobs:
           source: "build.tar.gz"
           target: "/home/ec2-user/"
 
-      - name: Copy Private Key to Bastion
-        uses: appleboy/scp-action@v0.1.5
+      - name: Setup Private Key on Bastion
+        uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.BASTION_PUBLIC_IP }}
           username: ec2-user
           key: ${{ secrets.BASTION_SSH_KEY }}
-          source: "infra/terraform/clouddoctor-key.pem"
-          target: "/home/ec2-user/private-cloud-doctor.pem"
-          strip_components: 2
+          script: |
+            cat > /home/ec2-user/private-cloud-doctor.pem << 'EOFKEY'
+            ${{ secrets.EC2_PRIVATE_KEY }}
+            EOFKEY
+            chmod 400 /home/ec2-user/private-cloud-doctor.pem
 
       # 8️⃣ ASG 스케일업 및 인스턴스 준비 대기
       - name: Scale up ASG and wait for instances
