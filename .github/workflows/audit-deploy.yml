@@ -7,7 +7,11 @@ on:
       - main
     paths:
       - 'infraaudit/**'
-
+# OIDC 토큰 사용을 위한 권한 설정 (추가 필수)
+permissions:
+  id-token: write
+  contents: read
+  
 jobs:
   deploy:
     runs-on: ubuntu-latest
