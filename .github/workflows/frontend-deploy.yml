@@ -8,26 +8,34 @@ on:
     paths:
       - 'frontend/**'
 
+# 1️⃣ OIDC 권한 설정 (추가 필수)
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    env:
-      BASTION_PUBLIC_IP: ${{ secrets.BASTION_PUBLIC_IP }}
-      FRONTEND_PRIVATE_IP: ${{ secrets.FRONTEND_PRIVATE_IP }}
-
     steps:
-      # 1️⃣ 코드 체크아웃
+      # 2️⃣ 코드 체크아웃
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2️⃣ Node.js 환경 설정
+      # 3️⃣ AWS OIDC 인증 (Access Key 없이 Role ARN 사용)
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-northeast-2
+
+      # 4️⃣ Node.js 환경 설정
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
 
-      # 3️⃣ 패키지 설치 및 빌드
+      # 5️⃣ 패키지 설치 및 빌드
       - name: Install dependencies and build
         working-directory: frontend/cloud-doctor
         env:
@@ -37,13 +45,13 @@ jobs:
           npm ci
           CI=false npm run build
 
-      # 4️⃣ 빌드 파일 압축
+      # 6️⃣ 빌드 파일 압축
       - name: Create build archive
         run: |
           cd frontend/cloud-doctor
           tar -czf build.tar.gz -C build .
 
-      # 5️⃣ Bastion 서버로 빌드 파일 업로드
+      # 7️⃣ Bastion 서버로 빌드 파일 업로드
       - name: Copy build files to Bastion
         uses: appleboy/scp-action@v0.1.5
         with:
@@ -53,7 +61,7 @@ jobs:
           source: "frontend/cloud-doctor/build.tar.gz"
           target: "/home/ubuntu/"
 
-      # 6️⃣ Bastion에서 Private EC2로 전송 및 배포
+      # 8️⃣ Bastion에서 Private EC2로 전송 및 배포
       - name: Deploy on Private EC2 via Bastion
         uses: appleboy/ssh-action@v0.1.5
         with:
@@ -61,11 +69,11 @@ jobs:
           username: ubuntu
           key: ${{ secrets.BASTION_SSH_KEY }}
           script: |
-            # 1. Private EC2로 전송
+            # 1. Private EC2로 전송 (경로 주의: scp source 위치 확인)
             scp -i /home/ubuntu/private-cloud-doctor.pem -o StrictHostKeyChecking=no /home/ubuntu/frontend/cloud-doctor/build.tar.gz ubuntu@${{ secrets.FRONTEND_PRIVATE_IP }}:/home/ubuntu/
 
-            # 2. Private EC2에서 배포
-            ssh -i /home/ubuntu/private-cloud-doctor.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.FRONTEND_PRIVATE_IP }} << EOF
+            # 2. Private EC2에서 배포 (EOF에 따옴표를 붙여 안전하게 실행)
+            ssh -i /home/ubuntu/private-cloud-doctor.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.FRONTEND_PRIVATE_IP }} << 'EOF'
               # 기존 파일 백업
               sudo mkdir -p /var/www/html/backup
               sudo cp -r /var/www/html/* /var/www/html/backup/ 2>/dev/null || true
