@@ -158,6 +158,71 @@ jobs:
               sleep 5
             done
 
+      # ⭐ AMI 생성
+      - name: Create AMI from deployed instance
+        id: create_ami
+        run: |
+          ASG_NAME="${{ secrets.FE_ASG_NAME }}"
+          
+          INSTANCE_ID=$(aws autoscaling describe-auto-scaling-groups \
+            --auto-scaling-group-names "$ASG_NAME" \
+            --region ap-northeast-2 \
+            --query 'AutoScalingGroups[0].Instances[0].InstanceId' \
+            --output text)
+          
+          echo "📸 AMI 생성 중..."
+          AMI_ID=$(aws ec2 create-image \
+            --instance-id $INSTANCE_ID \
+            --name "clouddoctor-frontend-$(date +%Y%m%d-%H%M%S)" \
+            --description "Frontend deployment $(date)" \
+            --region ap-northeast-2 \
+            --output text)
+          
+          echo "AMI_ID=$AMI_ID" >> $GITHUB_OUTPUT
+          echo "✅ AMI 생성 완료: $AMI_ID"
+          
+          echo "⏳ AMI 사용 가능할 때까지 대기..."
+          aws ec2 wait image-available --image-ids $AMI_ID --region ap-northeast-2
+          echo "✅ AMI 사용 가능"
+
+      # 🔄 Launch Template 업데이트
+      - name: Update Launch Template
+        run: |
+          LAUNCH_TEMPLATE_NAME="clouddoctor-frontend"
+          AMI_ID="${{ steps.create_ami.outputs.AMI_ID }}"
+          
+          echo "🔄 Launch Template 업데이트 중..."
+          aws ec2 create-launch-template-version \
+            --launch-template-name $LAUNCH_TEMPLATE_NAME \
+            --source-version '$Latest' \
+            --launch-template-data "{\"ImageId\":\"$AMI_ID\"}" \
+            --region ap-northeast-2
+          
+          aws ec2 modify-launch-template \
+            --launch-template-name $LAUNCH_TEMPLATE_NAME \
+            --default-version '$Latest' \
+            --region ap-northeast-2
+          
+          echo "✅ Launch Template 업데이트 완료"
+
+      # 🔁 기존 인스턴스 교체 (인스턴스 리프레시)
+      - name: Refresh ASG instances
+        run: |
+          ASG_NAME="${{ secrets.FE_ASG_NAME }}"
+          
+          echo "🔁 기존 인스턴스 교체 시작..."
+          aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name "$ASG_NAME" \
+            --preferences '{"MinHealthyPercentage":50,"InstanceWarmup":60}' \
+            --region ap-northeast-2
+          
+          echo "⏳ 인스턴스 리프레시 완료 대기..."
+          aws autoscaling wait instance-refresh-complete \
+            --auto-scaling-group-name "$ASG_NAME" \
+            --region ap-northeast-2 || true
+          
+          echo "✅ 인스턴스 교체 완료"
+
       # 🔟 배포 완료 후 ASG 스케일다운
       - name: Scale down ASG after deployment
         if: always()
