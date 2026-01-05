@@ -1,4 +1,4 @@
-name: Python Backend Deploy (ECR)
+name: Python Backend Deploy (ECR + ASG)
 
 on:
   workflow_dispatch:
@@ -35,42 +35,69 @@ jobs:
       - name: Build, tag, and push image to Amazon ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ secrets.ECR_PYTHON_REPO_NAME }} # ECR 레포지토리 이름
+          ECR_REPOSITORY: ${{ secrets.ECR_PYTHON_REPO_NAME }}
           IMAGE_TAG: latest
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./infraaudit
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      # 4. Bastion을 통해 Private EC2에 접속하여 배포 명령 전달
-      - name: Deploy to Private EC2 via Bastion
+      # 4. Bastion 접속 후 ASG 내 인스턴스 IP 스캔 및 배포
+      - name: Deploy to Dynamic ASG Instances via Bastion
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.BASTION_PUBLIC_IP }}
           username: ubuntu
           key: ${{ secrets.BASTION_SSH_KEY }}
           script: |
-            # 서버 IP 리스트 (ALB 대응을 위해 반복문 사용)
-            SERVER_IPS=("${{ secrets.PYTHON_SERVER_1_IP }}" "${{ secrets.PYTHON_SERVER_2_IP }}")
+            # ASG 이름을 Secrets에서 가져옴
+            ASG_NAME="${{ secrets.PYTHON_ASG_NAME }}"
+            ECR_REGISTRY="${{ steps.login-ecr.outputs.registry }}"
+            REPO_NAME="${{ secrets.ECR_PYTHON_REPO_NAME }}"
             
-            for IP in "${SERVER_IPS[@]}"; do
-              echo "🚀 $IP 서버에 ECR 이미지 배포 중..."
+            echo "🔍 ASG [$ASG_NAME]에서 실행 중인 인스턴스를 찾는 중..."
+            
+            # 1. 현재 InService 상태인 인스턴스 ID들 조회
+            INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
+              --auto-scaling-group-names "$ASG_NAME" \
+              --region ap-northeast-2 \
+              --query 'AutoScalingGroups[0].Instances[?LifecycleState==`InService`].InstanceId' \
+              --output text)
+            
+            if [ -z "$INSTANCE_IDS" ] || [ "$INSTANCE_IDS" == "None" ]; then
+              echo "❌ 배포 가능한 인스턴스가 없습니다."
+              exit 1
+            fi
+
+            # 2. 인스턴스 ID로 Private IP 추출
+            SERVER_IPS=$(aws ec2 describe-instances \
+              --instance-ids $INSTANCE_IDS \
+              --region ap-northeast-2 \
+              --query 'Reservations[*].Instances[*].PrivateIpAddress' \
+              --output text)
+
+            echo "📍 배포 대상 IP: $SERVER_IPS"
+
+            # 3. 각 IP별로 순차 배포
+            for IP in $SERVER_IPS; do
+              echo "🚀 서버 배포 시작: $IP"
               
-              ssh -i /home/ubuntu/private-cloud-doctor.pem -o StrictHostKeyChecking=no ubuntu@$IP << 'EOF'
-                # ECR 로그인 (인스턴스 프로파일 권한 필요)
-                aws ecr get-login-password --region ap-northeast-2 | sudo docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
+              ssh -i /home/ubuntu/private-cloud-doctor.pem -o StrictHostKeyChecking=no ubuntu@$IP << EOF
+                # ECR 로그인
+                aws ecr get-login-password --region ap-northeast-2 | sudo docker login --username AWS --password-stdin $ECR_REGISTRY
                 
-                # 최신 이미지 풀
-                sudo docker pull ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_PYTHON_REPO_NAME }}:latest
-                
-                # 기존 컨테이너 중지 및 삭제
+                # 이미지 Pull 및 컨테이너 재시작
+                sudo docker pull $ECR_REGISTRY/$REPO_NAME:latest
                 sudo docker stop infraaudit-backend || true
                 sudo docker rm infraaudit-backend || true
                 
-                # 새 컨테이너 실행
-                # OIDC 임시 키 대신 'IAM 인스턴스 프로파일'을 사용하는 것이 보안상 훨씬 좋습니다.
                 sudo docker run -d -p 8000:8000 \
                   --restart unless-stopped \
                   --name infraaudit-backend \
-                  ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_PYTHON_REPO_NAME }}:latest
-              EOF
+                  $ECR_REGISTRY/$REPO_NAME:latest
+                  
+                # 불필요한 이미지 정리
+                sudo docker image prune -f
+            EOF
+              echo "✅ 서버 배포 완료: $IP"
+              sleep 5
             done
