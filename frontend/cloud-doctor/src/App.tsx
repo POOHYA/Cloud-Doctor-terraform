@@ -48,19 +48,6 @@ function AppContent() {
               }
             ></Route>
             <Route
-              path="/prowler"
-              element={
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Prowler />
-                </motion.div>
-              }
-            />
-            <Route
               path="/checklist"
               element={
                 <motion.div
